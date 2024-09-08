@@ -5,7 +5,7 @@ from gpiozero import Motor
 
 class MotorControl(object):
     def __init__(self):
-        self._motor = Motor(5, 6)
+        self._motor = Motor(6, 5)
 
     def forward(self):
         print('forward')

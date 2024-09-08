@@ -5,7 +5,7 @@ from gpiozero import Motor, Robot
 class RobotControl(object):
     def __init__(self):
         left = Motor(27, 22)
-        right = Motor(5, 6)
+        right = Motor(6, 5)
         self._robot = Robot(left=left, right=right)
 
     def forward(self):

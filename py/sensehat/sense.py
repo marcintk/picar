@@ -8,18 +8,13 @@ class SenseDisplay(object):
     def __init__(self):
         self.sense = SenseHat()
         self.sense.set_rotation(180)
-        self.shows = False
 
 
-    def show(self):
-        if not self.shows:
-            self.sense.show_letter("X", text_colour=_RED)
-            self.shows = True
+    def show(self, digit:int):
+        self.sense.show_letter(str(digit), text_colour=_RED)
 
     def clear(self):
-        if self.shows:
-            self.sense.clear()
-            self.shows = False
+        self.sense.clear()
 
 
 if __name__ == "__main__":

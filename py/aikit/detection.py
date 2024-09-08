@@ -25,7 +25,7 @@ from hailo_rpi_common import (
 class user_app_callback_class(app_callback_class):
     def __init__(self):
         super().__init__()
-        self.new_variable = 42  # New variable example
+        self.detected =  multiprocessing.Value('i', 0)
 
     def new_function(self):  # New function example
         return "The meaning of life is: "
@@ -68,6 +68,12 @@ def app_callback(pad, info, user_data):
         if label == "person":
             string_to_print += f"Detection: {label} {confidence:.2f}\n"
             detection_count += 1
+
+    if detection_count > 0:
+        user_data.detected.value = 9 if detection_count > 9 else detection_count
+    else:
+        user_data.detected.value = 0
+
     if user_data.use_frame:
         # Note: using imshow will not work here, as the callback function is not running in the main thread
         # Let's print the detection count to the frame
@@ -79,7 +85,7 @@ def app_callback(pad, info, user_data):
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         user_data.set_frame(frame)
 
-    print(string_to_print)
+    #print(string_to_print)
     return Gst.PadProbeReturn.OK
 
 
