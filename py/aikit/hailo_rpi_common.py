@@ -130,7 +130,7 @@ class GStreamerApp:
         self.video_source = self.options_menu.input
         self.source_type = get_source_type(self.video_source)
         self.user_data = user_data
-        self.video_sink = "xvimagesink"
+        self.video_sink = "fakesink"
         self.pipeline = None
         self.loop = None
 

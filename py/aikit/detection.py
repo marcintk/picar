@@ -9,7 +9,7 @@ import setproctitle
 import cv2
 import time
 import hailo
-from hailo_rpi_common import (
+from py.aikit.hailo_rpi_common import (
     get_default_parser,
     QUEUE,
     get_caps_from_pad,
@@ -85,7 +85,7 @@ def app_callback(pad, info, user_data):
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         user_data.set_frame(frame)
 
-    #print(string_to_print)
+    print(string_to_print)
     return Gst.PadProbeReturn.OK
 
 
@@ -109,7 +109,7 @@ class GStreamerDetectionApp(GStreamerApp):
 
         # Temporary code: new postprocess will be merged to TAPPAS.
         # Check if new postprocess so file exists
-        new_postprocess_path = os.path.join(self.current_path, '../resources/libyolo_hailortpp_post.so')
+        new_postprocess_path = os.path.join(self.current_path, './resources/libyolo_hailortpp_post.so')
         if os.path.exists(new_postprocess_path):
             self.default_postprocess_so = new_postprocess_path
         else:
@@ -119,13 +119,15 @@ class GStreamerDetectionApp(GStreamerApp):
             self.hef_path = args.hef_path
         # Set the HEF file path based on the network
         elif args.network == "yolov6n":
-            self.hef_path = os.path.join(self.current_path, '../resources/yolov6n.hef')
+            self.hef_path = os.path.join(self.current_path, './resources/yolov6n.hef')
         elif args.network == "yolov8s":
-            self.hef_path = os.path.join(self.current_path, '../resources/yolov8s_h8l.hef')
+            self.hef_path = os.path.join(self.current_path, './resources/yolov8s_h8l.hef')
         elif args.network == "yolox_s_leaky":
-            self.hef_path = os.path.join(self.current_path, '../resources/yolox_s_leaky_h8l_mz.hef')
+            self.hef_path = os.path.join(self.current_path, './resources/yolox_s_leaky_h8l_mz.hef')
         else:
             assert False, "Invalid network type"
+
+        print('model', args.network)
 
         # User-defined label JSON file
         if args.labels_json is not None:
