@@ -22,11 +22,13 @@ class SenseDisplay(MultiProcessorRunner):
         self.sense.clear()
 
     def run(self) -> None:
+        print("SenseDisplay started!")
+
         while True:
-            print("Worker2", self.shared_data.detected.value)
+            print("SenseDisplay: detected=", self.shared_data.detected.value)
 
             if self.shared_data.detected.value > 0:
-                self.sense.show(self.shared_data.detected.value)
+                self.sense.show_letter(self.shared_data.detected.value)
             else:
                 self.sense.clear()
 

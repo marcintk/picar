@@ -189,6 +189,8 @@ class GStreamerApp:
         return False
 
     def run(self) -> None:
+        print("GStreamer started!")
+
         # Add a watch for messages on the pipeline's bus
         bus = self.pipeline.get_bus()
         bus.add_signal_watch()
