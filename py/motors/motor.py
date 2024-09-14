@@ -19,6 +19,7 @@ class MotorControl(object):
         print('stop')
         self._motor.stop()
 
+
 if __name__ == "__main__":
     control = MotorControl()
     control.forward()

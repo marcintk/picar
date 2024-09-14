@@ -1,5 +1,4 @@
 import os
-from enum import Enum
 
 _bools = ('NO', 'YES')
 
@@ -32,14 +31,7 @@ class Parameters(object):
             password = os.getenv("CAMERA_PASSWORD")
             return f"rtsp://{user}:{password}@{url}"
 
-    def __init__(self,
-                 network:str,
-                 video_input:str,
-                 show_display:bool,
-                 skip_detection:bool,
-                 plot_detection:bool,
-                 show_fps:bool,
-                 verbose: bool):
+    def __init__(self, network: str, video_input: str, show_display: bool, skip_detection: bool, plot_detection: bool, show_fps: bool, verbose: bool):
         self.network: str = network
         self.video_input: str = video_input
         self.show_display: bool = show_display

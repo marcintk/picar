@@ -7,11 +7,9 @@ from py.params import Parameters
 from py.sensehat.sense import SenseDisplay
 
 
-
-
 class MultiProcessor(object):
     def __init__(self, params: Parameters):
-        self.params : Parameters = params
+        self.params: Parameters = params
         self.user_data = user_app_callback_class()
         self.sense = SenseDisplay()
 
@@ -60,6 +58,3 @@ class MultiProcessor(object):
                 self.sense.clear()
 
             time.sleep(0.1)
-
-
-

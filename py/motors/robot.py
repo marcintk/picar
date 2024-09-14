@@ -2,6 +2,7 @@ from time import sleep
 
 from gpiozero import Motor, Robot
 
+
 class RobotControl(object):
     def __init__(self):
         left = Motor(27, 22)
@@ -27,6 +28,7 @@ class RobotControl(object):
     def stop(self):
         print('stop')
         self._robot.stop()
+
 
 if __name__ == "__main__":
     control = RobotControl()
