@@ -15,7 +15,7 @@ from py.aikit.hailo_rpi_common import (get_caps_from_pad, GStreamerApp, GStreame
 # -----------------------------------------------------------------------------------------------
 
 # This class inherits from the hailo_rpi_common.GStreamerApp class
-class GStreamerDetectionApp(MultiProcessorRunner, GStreamerApp):
+class GStreamerDetectionApp(GStreamerApp, MultiProcessorRunner):
     def __init__(self, params: Parameters, user_data: GStreamerCallbackClass):
         # Call the parent class constructor
         super().__init__(params, user_data, self.callback_function)

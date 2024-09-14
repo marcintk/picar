@@ -21,7 +21,7 @@ class SenseDisplay(MultiProcessorRunner):
     def clear(self):
         self.sense.clear()
 
-    def run(self):
+    def run(self) -> None:
         while True:
             print("Worker2", self.shared_data.detected.value)
 

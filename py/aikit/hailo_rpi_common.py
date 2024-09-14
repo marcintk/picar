@@ -188,7 +188,7 @@ class GStreamerApp:
         Gst.debug_bin_to_dot_file(self.pipeline, Gst.DebugGraphDetails.ALL, "pipeline")
         return False
 
-    def run(self):
+    def run(self) -> None:
         # Add a watch for messages on the pipeline's bus
         bus = self.pipeline.get_bus()
         bus.add_signal_watch()
