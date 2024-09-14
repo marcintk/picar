@@ -30,7 +30,8 @@ class MultiProcessor(object):
     def join(self) -> None:
         # wait until processes are finished
         for process in self.processes:
+            print("Waiting on process: {}".format(process.pid))
             process.join()
 
-        # both processes finished
+        # all processes finished
         print("All processes finished execution!")

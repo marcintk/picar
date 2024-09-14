@@ -29,7 +29,7 @@ except ImportError:
 # 2. Setup a multiprocessing queue to pass the frame to the main thread
 # Additional variables and functions can be added to this class as needed
 
-class GStreamerCallbackClass(object):
+class GStreamerSharedData(object):
     def __init__(self):
         self.frame_count = 0
         self.frame_queue = multiprocessing.Queue(maxsize=3)
@@ -68,7 +68,7 @@ def get_caps_from_pad(pad: Gst.Pad):
 
 
 # This function is used to display the user data frame
-def display_user_data_frame(user_data: GStreamerCallbackClass):
+def display_user_data_frame(user_data: GStreamerSharedData):
     while user_data.running:
         frame = user_data.get_frame()
         if frame is not None:
@@ -93,9 +93,16 @@ def get_source_type(input_source):
 # GStreamerApp class
 # -----------------------------------------------------------------------------------------------
 class GStreamerApp:
-    def __init__(self, params: Parameters, user_data: GStreamerCallbackClass, callback_function):
+    def __init__(self, params: Parameters, shared_data: GStreamerSharedData, callback_function):
         self.params: Parameters = params
+        self.shared_data = shared_data
         self.app_callback = callback_function
+        self.current_path = os.path.dirname(os.path.abspath(__file__))
+        self.video_source = self.params.video_input
+        self.source_type = get_source_type(self.video_source)
+        self.pipeline = None
+        self.loop = None
+        self.postprocess_dir = self.__get_tappas_postprocess_dir()
 
         # Set the process title
         setproctitle.setproctitle("Hailo Python App")
@@ -103,22 +110,45 @@ class GStreamerApp:
         # Set up signal handler for SIGINT (Ctrl-C)
         signal.signal(signal.SIGINT, self.shutdown)
 
-        # Initialize variables
-        tappas_postprocess_dir = os.environ.get('TAPPAS_POST_PROC_DIR', '')
-        if tappas_postprocess_dir == '':
-            print("TAPPAS_POST_PROC_DIR environment variable is not set. Please set it to by sourcing setup_env.sh")
-            exit(1)
-        self.current_path = os.path.dirname(os.path.abspath(__file__))
-        self.postprocess_dir = tappas_postprocess_dir
-        self.video_source = self.params.video_input
-        self.source_type = get_source_type(self.video_source)
-        self.user_data = user_data
-        self.pipeline = None
-        self.loop = None
+    def run(self) -> None:
+        print("GStreamer started!")
 
-    def on_fps_measurement(self, sink, fps, droprate, avgfps):
-        print(f"FPS: {fps:.2f}, Droprate: {droprate:.2f}, Avg FPS: {avgfps:.2f}")
-        return True
+        # Add a watch for messages on the pipeline's bus
+        bus = self.pipeline.get_bus()
+        bus.add_signal_watch()
+        bus.connect("message", self.bus_call, self.loop)
+
+        # Connect pad probe to the identity element
+        identity = self.pipeline.get_by_name("identity_callback")
+        if identity is None:
+            print(
+                "Warning: identity_callback element not found, add <identity name=identity_callback> in your pipeline where you want the callback to be called.")
+        else:
+            identity_pad = identity.get_static_pad("src")
+            identity_pad.add_probe(Gst.PadProbeType.BUFFER, self.app_callback, self.shared_data)
+
+        # Get xvimagesink element and disable QoS
+        # xvimagesink is instantiated by fpsdisplaysink
+        hailo_display = self.pipeline.get_by_name("hailo_display")
+        if hailo_display is None:
+            print("Warning: hailo_display element not found, add <fpsdisplaysink name=hailo_display> to your pipeline to support fps display.")
+        else:
+            xvimagesink = hailo_display.get_by_name("xvimagesink0")
+            if xvimagesink is not None:
+                xvimagesink.set_property("qos", False)
+
+        # Disable QoS to prevent frame drops
+        disable_qos(self.pipeline)
+
+        # Set pipeline to PLAYING state
+        self.pipeline.set_state(Gst.State.PLAYING)
+
+        # Run the GLib event loop
+        self.loop.run()
+
+        # Clean up
+        self.shared_data.running = False
+        self.pipeline.set_state(Gst.State.NULL)
 
     def create_pipeline(self):
         # Initialize GStreamer
@@ -188,45 +218,18 @@ class GStreamerApp:
         Gst.debug_bin_to_dot_file(self.pipeline, Gst.DebugGraphDetails.ALL, "pipeline")
         return False
 
-    def run(self) -> None:
-        print("GStreamer started!")
+    @staticmethod
+    def on_fps_measurement(sink, fps, droprate, avgfps):
+        print(f"FPS: {fps:.2f}, Droprate: {droprate:.2f}, Avg FPS: {avgfps:.2f}")
+        return True
 
-        # Add a watch for messages on the pipeline's bus
-        bus = self.pipeline.get_bus()
-        bus.add_signal_watch()
-        bus.connect("message", self.bus_call, self.loop)
-
-        # Connect pad probe to the identity element
-        identity = self.pipeline.get_by_name("identity_callback")
-        if identity is None:
-            print(
-                "Warning: identity_callback element not found, add <identity name=identity_callback> in your pipeline where you want the callback to be called.")
-        else:
-            identity_pad = identity.get_static_pad("src")
-            identity_pad.add_probe(Gst.PadProbeType.BUFFER, self.app_callback, self.user_data)
-
-        # Get xvimagesink element and disable QoS
-        # xvimagesink is instantiated by fpsdisplaysink
-        hailo_display = self.pipeline.get_by_name("hailo_display")
-        if hailo_display is None:
-            print("Warning: hailo_display element not found, add <fpsdisplaysink name=hailo_display> to your pipeline to support fps display.")
-        else:
-            xvimagesink = hailo_display.get_by_name("xvimagesink0")
-            if xvimagesink is not None:
-                xvimagesink.set_property("qos", False)
-
-        # Disable QoS to prevent frame drops
-        disable_qos(self.pipeline)
-
-        # Set pipeline to PLAYING state
-        self.pipeline.set_state(Gst.State.PLAYING)
-
-        # Run the GLib event loop
-        self.loop.run()
-
-        # Clean up
-        self.user_data.running = False
-        self.pipeline.set_state(Gst.State.NULL)
+    @staticmethod
+    def __get_tappas_postprocess_dir():
+        tappas_postprocess_dir = os.environ.get('TAPPAS_POST_PROC_DIR', '')
+        if tappas_postprocess_dir == '':
+            print("TAPPAS_POST_PROC_DIR environment variable is not set. Please set it to by sourcing setup_env.sh")
+            exit(1)
+        return tappas_postprocess_dir
 
 
 # ---------------------------------------------------------

@@ -7,11 +7,11 @@ class PipelineString(object):
         self.video_source = video_source
         self.source_type = self.get_source_type(video_source)
         self.show_fps = show_fps
+        self.hef_path = self.__get_hef_path(network)
         self.batch_size = 2
         self.network_width = 640
         self.network_height = 640
         self.network_format = "RGB"
-        self.hef_path = self.__get_hef_path(network)
         self.nms_score_threshold = 0.3
         self.nms_iou_threshold = 0.45
         self.labels_config = '' if True else f' config-path="params.labels_json"'
@@ -82,4 +82,3 @@ class PipelineString(object):
     @staticmethod
     def QUEUE(name, max_size_buffers=3, max_size_bytes=0, max_size_time=0, leaky='no'):
         return f"queue name={name} leaky={leaky} max-size-buffers={max_size_buffers} max-size-bytes={max_size_bytes} max-size-time={max_size_time} ! "
-

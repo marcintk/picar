@@ -7,7 +7,7 @@ from py.params import Parameters
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst
 import hailo
-from py.aikit.hailo_rpi_common import (get_caps_from_pad, GStreamerApp, GStreamerCallbackClass, )
+from py.aikit.hailo_rpi_common import (get_caps_from_pad, GStreamerApp, GStreamerSharedData, )
 
 
 # -----------------------------------------------------------------------------------------------
@@ -16,9 +16,9 @@ from py.aikit.hailo_rpi_common import (get_caps_from_pad, GStreamerApp, GStreame
 
 # This class inherits from the hailo_rpi_common.GStreamerApp class
 class GStreamerDetectionApp(GStreamerApp, MultiProcessorRunner):
-    def __init__(self, params: Parameters, user_data: GStreamerCallbackClass):
+    def __init__(self, params: Parameters, shared_data: GStreamerSharedData):
         # Call the parent class constructor
-        super().__init__(params, user_data, self.callback_function)
+        super().__init__(params, shared_data, GStreamerDetectionApp.callback_function)
 
         print('model', self.params.network)
         self.create_pipeline()
