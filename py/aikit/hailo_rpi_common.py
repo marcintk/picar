@@ -213,11 +213,6 @@ class GStreamerApp:
         # This is a placeholder function that should be overridden by the child class
         return ""
 
-    def dump_dot_file(self):
-        print("Dumping dot file...")
-        Gst.debug_bin_to_dot_file(self.pipeline, Gst.DebugGraphDetails.ALL, "pipeline")
-        return False
-
     @staticmethod
     def on_fps_measurement(sink, fps, droprate, avgfps):
         print(f"FPS: {fps:.2f}, Droprate: {droprate:.2f}, Avg FPS: {avgfps:.2f}")
