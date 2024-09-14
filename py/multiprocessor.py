@@ -1,5 +1,6 @@
 import multiprocessing
 import os
+from collections.abc import Callable
 from multiprocessing import Process
 
 
@@ -12,8 +13,8 @@ class MultiProcessor(object):
     def __init__(self) -> None:
         self.processes: [Process] = []
 
-    def add(self, runner: MultiProcessorRunner) -> 'MultiProcessor':
-        self.processes.append(multiprocessing.Process(target=runner.run))
+    def add(self, runner: Callable[[], MultiProcessorRunner]) -> 'MultiProcessor':
+        self.processes.append(multiprocessing.Process(target=runner().run))
         return self
 
     def start(self) -> 'MultiProcessor':

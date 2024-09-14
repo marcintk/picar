@@ -33,8 +33,8 @@ def main():
         shared_data = SharedData()
 
         processor = MultiProcessor()
-        processor.add(SenseDisplay(shared_data))
-        processor.add(GStreamerWrapper(params, shared_data))
+        processor.add(lambda: SenseDisplay(shared_data))
+        processor.add(lambda: GStreamerWrapper(params, shared_data))
         processor.start()
         processor.join()
 
