@@ -1,0 +1,25 @@
+# This is Git's per-user configuration file.
+
+[user]
+	name = marcintk
+	email = mkielichowski@gmail.com
+
+[alias]
+        lg = log --decorate --oneline --graph --pretty=format:"%C(yellow){%h}\\ %C(green)(%ar)\\ %C(blue)[%cn]%C(reset)\\ |%s|%C(auto)%d"
+        la = log --all --decorate --oneline --graph --pretty=format:"%C(yellow){%h}\\ %C(green)(%ar)\\ %C(blue)[%cn]%C(reset)\\ |%s|%C(auto)%d"
+	merger = "merge --no-ff --edit"
+        st = status
+        br = branch
+
+[push]
+	default = simple
+
+[pull]
+	rebase = true
+
+[pack]
+        writeReverseIndex = true
+[pager]
+	branch = false
+[init]
+	defaultBranch = main

@@ -1,4 +1,5 @@
 import sys
+
 import gi
 
 from py.params import Parameters
@@ -18,6 +19,7 @@ try:
 except ImportError:
     sys.exit("Failed to import hailo python module. Make sure you are in hailo virtual environment.")
 
+
 # -----------------------------------------------------------------------------------------------
 # User-defined class to be used in the callback function
 # -----------------------------------------------------------------------------------------------
@@ -30,7 +32,6 @@ except ImportError:
 class app_callback_class:
     def __init__(self):
         self.frame_count = 0
-        self.use_frame = False
         self.frame_queue = multiprocessing.Queue(maxsize=3)
         self.running = True
 
@@ -50,6 +51,7 @@ class app_callback_class:
         else:
             return None
 
+
 # -----------------------------------------------------------------------------------------------
 # Common functions
 # -----------------------------------------------------------------------------------------------
@@ -67,6 +69,7 @@ def get_caps_from_pad(pad: Gst.Pad):
     else:
         return None, None, None
 
+
 # This function is used to display the user data frame
 def display_user_data_frame(user_data: app_callback_class):
     while user_data.running:
@@ -76,8 +79,6 @@ def display_user_data_frame(user_data: app_callback_class):
         cv2.waitKey(1)
     cv2.destroyAllWindows()
 
-def QUEUE(name, max_size_buffers=3, max_size_bytes=0, max_size_time=0, leaky='no'):
-    return f"queue name={name} leaky={leaky} max-size-buffers={max_size_buffers} max-size-bytes={max_size_bytes} max-size-time={max_size_time} ! "
 
 def get_source_type(input_source):
     # This function will return the source type based on the input source
@@ -89,6 +90,7 @@ def get_source_type(input_source):
             return 'rpi'
         else:
             return 'file'
+
 
 # -----------------------------------------------------------------------------------------------
 # GStreamerApp class
@@ -113,19 +115,10 @@ class GStreamerApp:
         self.video_source = self.params.video_input
         self.source_type = get_source_type(self.video_source)
         self.user_data = user_data
-        self.video_sink = "xvimagesink" if self.params.show_display else "fakesink"
         self.pipeline = None
         self.loop = None
 
-        # Set Hailo parameters; these parameters should be set based on the model used
-        self.batch_size = 1
-        self.network_width = 640
-        self.network_height = 640
-        self.network_format = "RGB"
-        self.default_postprocess_so = None
-        self.hef_path = None
         self.app_callback = None
-        self.sync = "false"
 
     def on_fps_measurement(self, sink, fps, droprate, avgfps):
         print(f"FPS: {fps:.2f}, Droprate: {droprate:.2f}, Avg FPS: {avgfps:.2f}")
@@ -167,10 +160,9 @@ class GStreamerApp:
             print(f"QoS message received from {qos_element}")
         return True
 
-
     def on_eos(self):
         if self.source_type == "file":
-             # Seek to the start (position 0) in nanoseconds
+            # Seek to the start (position 0) in nanoseconds
             success = self.pipeline.seek_simple(Gst.Format.TIME, Gst.SeekFlags.FLUSH, 0)
             if success:
                 print("Video rewound successfully. Restarting playback...")
@@ -178,7 +170,6 @@ class GStreamerApp:
                 print("Error rewinding the video.")
         else:
             self.shutdown()
-
 
     def shutdown(self, signum=None, frame=None):
         print("Shutting down... Hit Ctrl-C again to force quit.")
@@ -191,7 +182,6 @@ class GStreamerApp:
 
         self.pipeline.set_state(Gst.State.NULL)
         GLib.idle_add(self.loop.quit)
-
 
     def get_pipeline_string(self):
         # This is a placeholder function that should be overridden by the child class
@@ -211,7 +201,8 @@ class GStreamerApp:
         # Connect pad probe to the identity element
         identity = self.pipeline.get_by_name("identity_callback")
         if identity is None:
-            print("Warning: identity_callback element not found, add <identity name=identity_callback> in your pipeline where you want the callback to be called.")
+            print(
+                "Warning: identity_callback element not found, add <identity name=identity_callback> in your pipeline where you want the callback to be called.")
         else:
             identity_pad = identity.get_static_pad("src")
             identity_pad.add_probe(Gst.PadProbeType.BUFFER, self.app_callback, self.user_data)
@@ -239,6 +230,7 @@ class GStreamerApp:
         self.user_data.running = False
         self.pipeline.set_state(Gst.State.NULL)
 
+
 # ---------------------------------------------------------
 # Functions used to get numpy arrays from GStreamer buffers
 # ---------------------------------------------------------
@@ -247,21 +239,23 @@ def handle_rgb(map_info, width, height):
     # The copy() method is used to create a copy of the numpy array. This is necessary because the original numpy array is created from buffer data, and it does not own the data it represents. Instead, it's just a view of the buffer's data.
     return np.ndarray(shape=(height, width, 3), dtype=np.uint8, buffer=map_info.data).copy()
 
+
 def handle_nv12(map_info, width, height):
     y_plane_size = width * height
     uv_plane_size = width * height // 2
     y_plane = np.ndarray(shape=(height, width), dtype=np.uint8, buffer=map_info.data[:y_plane_size]).copy()
-    uv_plane = np.ndarray(shape=(height//2, width//2, 2), dtype=np.uint8, buffer=map_info.data[y_plane_size:]).copy()
+    uv_plane = np.ndarray(shape=(height // 2, width // 2, 2), dtype=np.uint8, buffer=map_info.data[y_plane_size:]).copy()
     return y_plane, uv_plane
+
 
 def handle_yuyv(map_info, width, height):
     return np.ndarray(shape=(height, width, 2), dtype=np.uint8, buffer=map_info.data).copy()
 
+
 FORMAT_HANDLERS = {
-    'RGB': handle_rgb,
-    'NV12': handle_nv12,
-    'YUYV': handle_yuyv,
+    'RGB': handle_rgb, 'NV12': handle_nv12, 'YUYV': handle_yuyv,
 }
+
 
 def get_numpy_from_buffer(buffer, format, width, height):
     """
@@ -289,6 +283,7 @@ def get_numpy_from_buffer(buffer, format, width, height):
         return handler(map_info, width, height)
     finally:
         buffer.unmap(map_info)
+
 
 # ---------------------------------------------------------
 # Useful functions for working with GStreamer

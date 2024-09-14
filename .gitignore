@@ -1,4 +1,5 @@
-hailo-rpi5-examples
+.idea
+hailo-rpi5-examples/
 hailort.log
 **/__pycache__/
 venv_picar/

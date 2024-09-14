@@ -1,23 +1,14 @@
 import gi
 
+from py.aikit.pipeline_string import PipelineString
 from py.params import Parameters
 
 gi.require_version('Gst', '1.0')
-from gi.repository import Gst, GLib
-import os
+from gi.repository import Gst
 import multiprocessing
-import numpy as np
-import setproctitle
-import cv2
-import time
 import hailo
-from py.aikit.hailo_rpi_common import (
-    QUEUE,
-    get_caps_from_pad,
-    get_numpy_from_buffer,
-    GStreamerApp,
-    app_callback_class,
-)
+from py.aikit.hailo_rpi_common import (get_caps_from_pad, GStreamerApp, app_callback_class, )
+
 
 # -----------------------------------------------------------------------------------------------
 # User-defined class to be used in the callback function
@@ -26,10 +17,11 @@ from py.aikit.hailo_rpi_common import (
 class user_app_callback_class(app_callback_class):
     def __init__(self):
         super().__init__()
-        self.detected =  multiprocessing.Value('i', 0)
+        self.detected = multiprocessing.Value('i', 0)
 
     def new_function(self):  # New function example
         return "The meaning of life is: "
+
 
 # -----------------------------------------------------------------------------------------------
 # User-defined callback function
@@ -50,12 +42,6 @@ def app_callback(pad, info, user_data):
     # Get the caps from the pad
     format, width, height = get_caps_from_pad(pad)
 
-    # If the user_data.use_frame is set to True, we can get the video frame from the buffer
-    frame = None
-    if user_data.use_frame and format is not None and width is not None and height is not None:
-        # Get video frame
-        frame = get_numpy_from_buffer(buffer, format, width, height)
-
     # Get the detections from the buffer
     roi = hailo.get_roi_from_buffer(buffer)
     detections = roi.get_objects_typed(hailo.HAILO_DETECTION)
@@ -75,17 +61,6 @@ def app_callback(pad, info, user_data):
     else:
         user_data.detected.value = 0
 
-    if user_data.use_frame:
-        # Note: using imshow will not work here, as the callback function is not running in the main thread
-        # Let's print the detection count to the frame
-        cv2.putText(frame, f"Detections: {detection_count}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-        # Example of how to use the new_variable and new_function from the user_data
-        # Let's print the new_variable and the result of the new_function to the frame
-        cv2.putText(frame, f"{user_data.new_function()} {user_data.new_variable}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-        # Convert the frame to BGR
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        user_data.set_frame(frame)
-
     print(string_to_print)
     return Gst.PadProbeReturn.OK
 
@@ -99,101 +74,13 @@ class GStreamerDetectionApp(GStreamerApp):
     def __init__(self, params: Parameters, user_data: user_app_callback_class):
         # Call the parent class constructor
         super().__init__(params, user_data)
-        # Additional initialization code can be added here
-        # Set Hailo parameters these parameters should be set based on the model used
-        self.batch_size = 2
-        self.network_width = 640
-        self.network_height = 640
-        self.network_format = "RGB"
-        nms_score_threshold = 0.3
-        nms_iou_threshold = 0.45
-
-        # Temporary code: new postprocess will be merged to TAPPAS.
-        # Check if new postprocess so file exists
-        new_postprocess_path = os.path.join(self.current_path, './resources/libyolo_hailortpp_post.so')
-        if os.path.exists(new_postprocess_path):
-            self.default_postprocess_so = new_postprocess_path
-        else:
-            self.default_postprocess_so = os.path.join(self.postprocess_dir, 'libyolo_hailortpp_post.so')
-
-        # Set the HEF file path based on the network
-        if self.params.network == "yolov6n":
-            self.hef_path = os.path.join(self.current_path, './resources/yolov6n.hef')
-        elif self.params.network  == "yolov8s":
-            self.hef_path = os.path.join(self.current_path, './resources/yolov8s_h8l.hef')
-        elif self.params.network  == "yolox_s_leaky":
-            self.hef_path = os.path.join(self.current_path, './resources/yolox_s_leaky_h8l_mz.hef')
-        else:
-            assert False, "Invalid network type"
-
-        print('model', self.params.network)
-
-        self.labels_config = '' if True else f' config-path="params.labels_json"'
-
         self.app_callback = app_callback
 
-        self.thresholds_str = (
-            f"nms-score-threshold={nms_score_threshold} "
-            f"nms-iou-threshold={nms_iou_threshold} "
-            f"output-format-type=HAILO_FORMAT_TYPE_FLOAT32"
-        )
-
-        # Set the process title
-        setproctitle.setproctitle("Hailo Detection App")
-
+        print('model', self.params.network)
         self.create_pipeline()
 
-    def get_pipeline_string(self):
-        if self.source_type == "rpi":
-            source_element = (
-                "libcamerasrc name=src_0 ! "
-                f"video/x-raw, format={self.network_format}, width=1536, height=864 ! "
-                + QUEUE("queue_src_scale")
-                + "videoscale ! "
-                f"video/x-raw, format={self.network_format}, width={self.network_width}, height={self.network_height}, framerate=30/1 ! "
-            )
-        elif self.source_type == "usb":
-            source_element = (
-                f"v4l2src device={self.video_source} name=src_0 ! "
-                "video/x-raw, width=640, height=480, framerate=30/1 ! "
-            )
-        else:
-            source_element = (
-                f"filesrc location=\"{self.video_source}\" name=src_0 ! "
-                + QUEUE("queue_dec264")
-                + " qtdemux ! h264parse ! avdec_h264 max-threads=2 ! "
-                " video/x-raw, format=I420 ! "
-            )
-        source_element += QUEUE("queue_scale")
-        source_element += "videoscale n-threads=2 ! "
-        source_element += QUEUE("queue_src_convert")
-        source_element += "videoconvert n-threads=3 name=src_convert qos=false ! "
-        source_element += f"video/x-raw, format={self.network_format}, width={self.network_width}, height={self.network_height}, pixel-aspect-ratio=1/1 ! "
-
-        pipeline_string = (
-            "hailomuxer name=hmux "
-            + source_element
-            + "tee name=t ! "
-            + QUEUE("bypass_queue", max_size_buffers=20)
-            + "hmux.sink_0 "
-            + "t. ! "
-            + QUEUE("queue_hailonet")
-            + "videoconvert n-threads=3 ! "
-            f"hailonet hef-path={self.hef_path} batch-size={self.batch_size} {self.thresholds_str} force-writable=true ! "
-            + QUEUE("queue_hailofilter")
-            + f"hailofilter so-path={self.default_postprocess_so} {self.labels_config} qos=false ! "
-            + QUEUE("queue_hmuc")
-            + "hmux.sink_1 "
-            + "hmux. ! "
-            + QUEUE("queue_hailo_python")
-            + QUEUE("queue_user_callback")
-            + "identity name=identity_callback ! "
-            + QUEUE("queue_hailooverlay")
-            + "hailooverlay ! "
-            + QUEUE("queue_videoconvert")
-            + "videoconvert n-threads=3 qos=false ! "
-            + QUEUE("queue_hailo_display")
-            + f"fpsdisplaysink video-sink={self.video_sink} name=hailo_display sync={self.sync} text-overlay={self.params.show_fps} signal-fps-measurements=true "
-        )
-        print(pipeline_string)
-        return pipeline_string
+    def get_pipeline_string(self) -> str:
+        return PipelineString(network=self.params.network,
+                              video_source=self.params.video_input,
+                              show_display=self.params.show_display,
+                              show_fps=self.params.show_fps).get_pipeline_string()
