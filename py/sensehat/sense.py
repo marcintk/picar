@@ -2,15 +2,15 @@ import time
 
 from sense_hat import SenseHat
 
-from main import PicarSharedData
 from py.multiprocessor import MultiProcessorRunner
+from py.shared_data import SharedData
 
 _RED = (255, 0, 0)
 
 
 class SenseDisplay(MultiProcessorRunner):
-    def __init__(self, shared_data: PicarSharedData):
-        self.shared_data: PicarSharedData = shared_data
+    def __init__(self, shared_data: SharedData):
+        self.shared_data: SharedData = shared_data
         self.sense: SenseHat = SenseHat()
 
         self.sense.set_rotation(180)
