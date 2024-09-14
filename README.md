@@ -50,34 +50,7 @@
 
 ## Installation
 
-### OpenCV (optional)
 
-#### Raspberry Pi5
-
-* Info Source: https://qengineering.eu/install%20opencv%20on%20raspberry%20pi%205.html
-
-```
-download, compile and build openCV
-> cd install/raspberryPi5
-> ./opencv_install_custom.sh
-```
-
-### Coral TPU
-
-```
-> cd install/coral-tpu
-Read and execute install_apex.md
-
-> install_python3.9.sh
-
-> cd ../..
-> export PATH=$PWD/.python/bin:$PATH
-> python3 --version
-Python 3.9.9
-> python3 -m venv venv
-> pip3 install -r requirements.txt
-> source venv/bin/activate
-```
 
 ### Application
 

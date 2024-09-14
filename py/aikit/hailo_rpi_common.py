@@ -1,14 +1,15 @@
 import sys
 import gi
+
+from py.params import Parameters
+
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GLib, GObject
 import os
-import argparse
 import multiprocessing
 import numpy as np
 import setproctitle
 import cv2
-import time
 import signal
 
 # Try to import hailo python module
@@ -75,23 +76,6 @@ def display_user_data_frame(user_data: app_callback_class):
         cv2.waitKey(1)
     cv2.destroyAllWindows()
 
-def get_default_parser():
-    parser = argparse.ArgumentParser(description="Hailo App Help")
-    parser.add_argument(
-        "--input", "-i", type=str, default="/dev/video0",
-        help="Input source. Can be a file, USB or RPi camera (CSI camera module). \
-        For RPi camera use '-i rpi' (Still in Beta). \
-        Defaults to /dev/video0"
-    )
-    parser.add_argument("--use-frame", "-u", action="store_true", help="Use frame from the callback function")
-    parser.add_argument("--show-fps", "-f", action="store_true", help="Print FPS on sink")
-    parser.add_argument(
-        "--disable-sync", action="store_true",
-        help="Disables display sink sync, will run as fast as possible. Relevant when using file source."
-    )
-    parser.add_argument("--dump-dot", action="store_true", help="Dump the pipeline graph to a dot file pipeline.dot")
-    return parser
-
 def QUEUE(name, max_size_buffers=3, max_size_bytes=0, max_size_time=0, leaky='no'):
     return f"queue name={name} leaky={leaky} max-size-buffers={max_size_buffers} max-size-bytes={max_size_bytes} max-size-time={max_size_time} ! "
 
@@ -110,12 +94,11 @@ def get_source_type(input_source):
 # GStreamerApp class
 # -----------------------------------------------------------------------------------------------
 class GStreamerApp:
-    def __init__(self, args, user_data: app_callback_class):
+    def __init__(self, params: Parameters, user_data: app_callback_class):
+        self.params: Parameters = params
+
         # Set the process title
         setproctitle.setproctitle("Hailo Python App")
-
-        # Create an empty options menu
-        self.options_menu = args
 
         # Set up signal handler for SIGINT (Ctrl-C)
         signal.signal(signal.SIGINT, self.shutdown)
@@ -127,10 +110,10 @@ class GStreamerApp:
             exit(1)
         self.current_path = os.path.dirname(os.path.abspath(__file__))
         self.postprocess_dir = tappas_postprocess_dir
-        self.video_source = self.options_menu.input
+        self.video_source = self.params.video_input
         self.source_type = get_source_type(self.video_source)
         self.user_data = user_data
-        self.video_sink = "fakesink"
+        self.video_sink = "xvimagesink" if self.params.show_display else "fakesink"
         self.pipeline = None
         self.loop = None
 
@@ -142,14 +125,7 @@ class GStreamerApp:
         self.default_postprocess_so = None
         self.hef_path = None
         self.app_callback = None
-
-        # Set user data parameters
-        user_data.use_frame = self.options_menu.use_frame
-
-        self.sync = "false" if (self.options_menu.disable_sync or self.source_type != "file") else "true"
-
-        if self.options_menu.dump_dot:
-            os.environ["GST_DEBUG_DUMP_DOT_DIR"] = self.current_path
+        self.sync = "false"
 
     def on_fps_measurement(self, sink, fps, droprate, avgfps):
         print(f"FPS: {fps:.2f}, Droprate: {droprate:.2f}, Avg FPS: {avgfps:.2f}")
@@ -168,7 +144,7 @@ class GStreamerApp:
             sys.exit(1)
 
         # Connect to hailo_display fps-measurements
-        if self.options_menu.show_fps:
+        if self.params.show_fps:
             print("Showing FPS")
             self.pipeline.get_by_name("hailo_display").connect("fps-measurements", self.on_fps_measurement)
 
@@ -253,17 +229,8 @@ class GStreamerApp:
         # Disable QoS to prevent frame drops
         disable_qos(self.pipeline)
 
-        # Start a subprocess to run the display_user_data_frame function
-        if self.options_menu.use_frame:
-            display_process = multiprocessing.Process(target=display_user_data_frame, args=(self.user_data,))
-            display_process.start()
-
         # Set pipeline to PLAYING state
         self.pipeline.set_state(Gst.State.PLAYING)
-
-        # Dump dot file
-        if self.options_menu.dump_dot:
-            GLib.timeout_add_seconds(3, self.dump_dot_file)
 
         # Run the GLib event loop
         self.loop.run()
@@ -271,9 +238,6 @@ class GStreamerApp:
         # Clean up
         self.user_data.running = False
         self.pipeline.set_state(Gst.State.NULL)
-        if self.options_menu.use_frame:
-            display_process.terminate()
-            display_process.join()
 
 # ---------------------------------------------------------
 # Functions used to get numpy arrays from GStreamer buffers

@@ -2,9 +2,9 @@ import logging
 
 from py.argparse import ArgsParser
 from py.params import Parameters
+from py.multiprocessor import MultiProcessor
 
 log = logging.getLogger(__name__)
-
 
 
 def main():
@@ -16,6 +16,10 @@ def main():
 
         if params.verbose:
             log.setLevel(logging.DEBUG)
+
+        processor=MultiProcessor(params)
+        processor.start()
+        processor.join()
 
     except KeyboardInterrupt:
         log.error("Keyboard Interrupt!")

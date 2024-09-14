@@ -1,8 +1,10 @@
 import gi
+
+from py.params import Parameters
+
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GLib
 import os
-import argparse
 import multiprocessing
 import numpy as np
 import setproctitle
@@ -10,7 +12,6 @@ import cv2
 import time
 import hailo
 from py.aikit.hailo_rpi_common import (
-    get_default_parser,
     QUEUE,
     get_caps_from_pad,
     get_numpy_from_buffer,
@@ -95,9 +96,9 @@ def app_callback(pad, info, user_data):
 
 # This class inherits from the hailo_rpi_common.GStreamerApp class
 class GStreamerDetectionApp(GStreamerApp):
-    def __init__(self, args, user_data):
+    def __init__(self, params: Parameters, user_data: user_app_callback_class):
         # Call the parent class constructor
-        super().__init__(args, user_data)
+        super().__init__(params, user_data)
         # Additional initialization code can be added here
         # Set Hailo parameters these parameters should be set based on the model used
         self.batch_size = 2
@@ -115,25 +116,19 @@ class GStreamerDetectionApp(GStreamerApp):
         else:
             self.default_postprocess_so = os.path.join(self.postprocess_dir, 'libyolo_hailortpp_post.so')
 
-        if args.hef_path is not None:
-            self.hef_path = args.hef_path
         # Set the HEF file path based on the network
-        elif args.network == "yolov6n":
+        if self.params.network == "yolov6n":
             self.hef_path = os.path.join(self.current_path, './resources/yolov6n.hef')
-        elif args.network == "yolov8s":
+        elif self.params.network  == "yolov8s":
             self.hef_path = os.path.join(self.current_path, './resources/yolov8s_h8l.hef')
-        elif args.network == "yolox_s_leaky":
+        elif self.params.network  == "yolox_s_leaky":
             self.hef_path = os.path.join(self.current_path, './resources/yolox_s_leaky_h8l_mz.hef')
         else:
             assert False, "Invalid network type"
 
-        print('model', args.network)
+        print('model', self.params.network)
 
-        # User-defined label JSON file
-        if args.labels_json is not None:
-            self.labels_config = f' config-path={args.labels_json} '
-        else:
-            self.labels_config = ''
+        self.labels_config = '' if True else f' config-path="params.labels_json"'
 
         self.app_callback = app_callback
 
@@ -198,32 +193,7 @@ class GStreamerDetectionApp(GStreamerApp):
             + QUEUE("queue_videoconvert")
             + "videoconvert n-threads=3 qos=false ! "
             + QUEUE("queue_hailo_display")
-            + f"fpsdisplaysink video-sink={self.video_sink} name=hailo_display sync={self.sync} text-overlay={self.options_menu.show_fps} signal-fps-measurements=true "
+            + f"fpsdisplaysink video-sink={self.video_sink} name=hailo_display sync={self.sync} text-overlay={self.params.show_fps} signal-fps-measurements=true "
         )
         print(pipeline_string)
         return pipeline_string
-
-if __name__ == "__main__":
-    # Create an instance of the user app callback class
-    user_data = user_app_callback_class()
-    parser = get_default_parser()
-    # Add additional arguments here
-    parser.add_argument(
-        "--network",
-        default="yolov6n",
-        choices=['yolov6n', 'yolov8s', 'yolox_s_leaky'],
-        help="Which Network to use, default is yolov6n",
-    )
-    parser.add_argument(
-        "--hef-path",
-        default=None,
-        help="Path to HEF file",
-    )
-    parser.add_argument(
-        "--labels-json",
-        default=None,
-        help="Path to costume labels JSON file",
-    )
-    args = parser.parse_args()
-    app = GStreamerDetectionApp(args, user_data)
-    app.run()

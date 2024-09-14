@@ -5,44 +5,6 @@ _bools = ('NO', 'YES')
 
 
 class Parameters(object):
-    class DetectorType(Enum):
-        NONE = 0
-        HAAR = 1
-        YOLO = 2
-
-        def __str__(self):
-            return self.name
-
-        def __repr__(self):
-            return self.name
-
-        @staticmethod
-        def from_string(s):
-            try:
-                return Parameters.DetectorType[s]
-            except KeyError:
-                raise ValueError()
-
-    class ComputeUnit(Enum):
-        CPU = "cpu"
-        CUDA = "cuda"
-        MKL = "mkl"
-        MPS = "mps"
-        OPENMP = "openmp"
-
-        def __str__(self):
-            return self.value
-
-        def __repr__(self):
-            return self.value
-
-        @staticmethod
-        def from_string(s):
-            try:
-                return Parameters.ComputeUnit[s.upper()]
-            except KeyError:
-                raise ValueError(f'Invalid compute unit: {s}')
-
     class Input(object):
         def __init__(self, video_input: str, rtsp_input: bool, device_input: str, device_backend: str, device_resolution: (int, int)):
             self.video_input: str = video_input
@@ -71,47 +33,28 @@ class Parameters(object):
             return f"rtsp://{user}:{password}@{url}"
 
     def __init__(self,
-                 detector_type: DetectorType,
-                 detector_model: str,
-                 detector_confidence: float,
-                 detector_max_objects: int,
-                 compute_unit: ComputeUnit,
-                 frame_probing: int,
-                 frame_resize: (int, int),
-                 show_display: bool,
-                 plot_detection: bool,
-                 video_input: str,
-                 rtsp_input: bool,
-                 device_input: str,
-                 device_backend: str,
-                 device_resolution: (int, int),
+                 network:str,
+                 video_input:str,
+                 show_display:bool,
+                 skip_detection:bool,
+                 plot_detection:bool,
+                 show_fps:bool,
                  verbose: bool):
-        self.detector_type: Parameters.DetectorType = detector_type
-        self.detector_model: str = detector_model
-        self.detector_confidence = detector_confidence
-        self.detector_max_objects = detector_max_objects
-        self.compute_unit: Parameters.ComputeUnit = compute_unit
-        self.frame_probing: int = frame_probing
-        self.frame_resize: (int, int) = frame_resize
+        self.network: str = network
+        self.video_input: str = video_input
         self.show_display: bool = show_display
+        self.skip_detection: bool = skip_detection
         self.plot_detection: bool = plot_detection
+        self.show_fps: bool = show_fps
         self.verbose: bool = verbose
-        self.input: Parameters.Input = Parameters.Input(video_input, rtsp_input, device_input, device_backend, device_resolution)
-
-    def resize(self):
-        return self.frame_resize is not None
 
     def __str__(self):
         return 'PARAMS:\n  ' + '\n  '.join(['---',  #
-                                            f'detector: {self.detector_type}',  #
-                                            f'model: {self.detector_model}',  #
-                                            f'confidence: {self.detector_confidence}',  #
-                                            f'max_objects: {self.detector_max_objects}',  #
-                                            f'compute_unit: {self.compute_unit}',  #
-                                            f'frame_probing: {self.frame_probing}',  #
-                                            f'frame_resize: {self.frame_resize}',  #
+                                            f'network: {self.network}',  #
+                                            f'video_input: {self.video_input}',  #
                                             f'show_display: {_bools[self.show_display]}',  #
-                                            f'draw_detection: {_bools[self.plot_detection]}',  #
-                                            f'{self.input}',  #
+                                            f'skip_detection: {_bools[self.skip_detection]}',  #
+                                            f'plot_detection: {_bools[self.plot_detection]}',  #
+                                            f'show_fps: {_bools[self.show_fps]}',  #
                                             f'verbose: {_bools[self.verbose]}',  #
                                             '---'])
