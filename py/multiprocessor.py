@@ -9,12 +9,20 @@ class MultiProcessorRunner(object):
         raise Exception('not implemented!')
 
 
+class _Wrapper(object):
+    def __init__(self, runner: Callable[[], MultiProcessorRunner]) -> None:
+        self.runner: Callable[[], MultiProcessorRunner] = runner
+
+    def target(self):
+        self.runner().run()
+
+
 class MultiProcessor(object):
     def __init__(self) -> None:
         self.processes: [Process] = []
 
     def add(self, runner: Callable[[], MultiProcessorRunner]) -> 'MultiProcessor':
-        self.processes.append(multiprocessing.Process(target=runner().run))
+        self.processes.append(multiprocessing.Process(target=_Wrapper(runner).target))
         return self
 
     def start(self) -> 'MultiProcessor':

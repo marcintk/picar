@@ -1,23 +1,13 @@
 import logging
 
 from py.aikit.detection import GStreamerDetectionApp
-from py.aikit.hailo_rpi_common import GStreamerSharedData
 from py.argparse import ArgsParser
-from py.multiprocessor import MultiProcessor, MultiProcessorRunner
+from py.multiprocessor import MultiProcessor
 from py.params import Parameters
 from py.sensehat.sense import SenseDisplay
 from py.shared_data import SharedData
 
 log = logging.getLogger(__name__)
-
-
-class GStreamerWrapper(MultiProcessorRunner):
-    def __init__(self, params: Parameters, shared_data: GStreamerSharedData):
-        self.params = params
-        self.shared_data = shared_data
-
-    def run(self) -> None:
-        GStreamerDetectionApp(self.params, self.shared_data).run()
 
 
 def main():
@@ -34,7 +24,7 @@ def main():
 
         processor = MultiProcessor()
         processor.add(lambda: SenseDisplay(shared_data))
-        processor.add(lambda: GStreamerWrapper(params, shared_data))
+        processor.add(lambda: GStreamerDetectionApp(params, shared_data))
         processor.start()
         processor.join()
 

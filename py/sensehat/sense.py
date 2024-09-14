@@ -28,7 +28,7 @@ class SenseDisplay(MultiProcessorRunner):
             print("SenseDisplay: detected=", self.shared_data.detected.value)
 
             if self.shared_data.detected.value > 0:
-                self.sense.show_letter(self.shared_data.detected.value)
+                self.show(self.shared_data.detected.value)
             else:
                 self.sense.clear()
 
