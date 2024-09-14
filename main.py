@@ -1,10 +1,24 @@
 import logging
+import multiprocessing
 
+from py.aikit.detection import GStreamerDetectionApp
+from py.aikit.hailo_rpi_common import GStreamerCallbackClass
 from py.argparse import ArgsParser
-from py.params import Parameters
 from py.multiprocessor import MultiProcessor
+from py.params import Parameters
+from py.sensehat.sense import SenseDisplay
 
 log = logging.getLogger(__name__)
+
+
+# -----------------------------------------------------------------------------------------------
+# User-defined class to be used in the callback function
+# -----------------------------------------------------------------------------------------------
+# Inheritance from the app_callback_class
+class PicarSharedData(GStreamerCallbackClass):
+    def __init__(self):
+        super().__init__()
+        self.detected = multiprocessing.Value('i', 0)
 
 
 def main():
@@ -17,7 +31,11 @@ def main():
         if params.verbose:
             log.setLevel(logging.DEBUG)
 
-        processor=MultiProcessor(params)
+        shared_data = PicarSharedData()
+
+        processor = MultiProcessor()
+        processor.add(SenseDisplay(shared_data))
+        processor.add(GStreamerDetectionApp(params, shared_data))
         processor.start()
         processor.join()
 

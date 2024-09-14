@@ -1,13 +1,18 @@
-from time import sleep
+import time
 
 from sense_hat import SenseHat
+
+from main import PicarSharedData
+from py.multiprocessor import MultiProcessorRunner
 
 _RED = (255, 0, 0)
 
 
-class SenseDisplay(object):
-    def __init__(self):
-        self.sense = SenseHat()
+class SenseDisplay(MultiProcessorRunner):
+    def __init__(self, shared_data: PicarSharedData):
+        self.shared_data: PicarSharedData = shared_data
+        self.sense: SenseHat = SenseHat()
+
         self.sense.set_rotation(180)
 
     def show(self, digit: int):
@@ -16,9 +21,13 @@ class SenseDisplay(object):
     def clear(self):
         self.sense.clear()
 
+    def run(self):
+        while True:
+            print("Worker2", self.shared_data.detected.value)
 
-if __name__ == "__main__":
-    display = SenseDisplay()
-    display.show()
-    sleep(1)
-    display.clear()
+            if self.shared_data.detected.value > 0:
+                self.sense.show(self.shared_data.detected.value)
+            else:
+                self.sense.clear()
+
+            time.sleep(0.1)

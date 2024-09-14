@@ -29,7 +29,7 @@ except ImportError:
 # 2. Setup a multiprocessing queue to pass the frame to the main thread
 # Additional variables and functions can be added to this class as needed
 
-class app_callback_class:
+class GStreamerCallbackClass(object):
     def __init__(self):
         self.frame_count = 0
         self.frame_queue = multiprocessing.Queue(maxsize=3)
@@ -46,10 +46,7 @@ class app_callback_class:
             self.frame_queue.put(frame)
 
     def get_frame(self):
-        if not self.frame_queue.empty():
-            return self.frame_queue.get()
-        else:
-            return None
+        return None if self.frame_queue.empty() else self.frame_queue.get()
 
 
 # -----------------------------------------------------------------------------------------------
@@ -71,7 +68,7 @@ def get_caps_from_pad(pad: Gst.Pad):
 
 
 # This function is used to display the user data frame
-def display_user_data_frame(user_data: app_callback_class):
+def display_user_data_frame(user_data: GStreamerCallbackClass):
     while user_data.running:
         frame = user_data.get_frame()
         if frame is not None:
@@ -96,8 +93,9 @@ def get_source_type(input_source):
 # GStreamerApp class
 # -----------------------------------------------------------------------------------------------
 class GStreamerApp:
-    def __init__(self, params: Parameters, user_data: app_callback_class):
+    def __init__(self, params: Parameters, user_data: GStreamerCallbackClass, callback_function):
         self.params: Parameters = params
+        self.app_callback = callback_function
 
         # Set the process title
         setproctitle.setproctitle("Hailo Python App")
@@ -117,8 +115,6 @@ class GStreamerApp:
         self.user_data = user_data
         self.pipeline = None
         self.loop = None
-
-        self.app_callback = None
 
     def on_fps_measurement(self, sink, fps, droprate, avgfps):
         print(f"FPS: {fps:.2f}, Droprate: {droprate:.2f}, Avg FPS: {avgfps:.2f}")
