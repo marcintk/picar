@@ -3,6 +3,7 @@ import os
 
 class PipelineString(object):
     def __init__(self, network: str, video_source: str, show_display: bool, show_fps: bool):
+        self.current_path = os.path.dirname(os.path.abspath(__file__))
         self.video_source = video_source
         self.source_type = self.get_source_type(video_source)
         self.show_fps = show_fps
@@ -13,7 +14,6 @@ class PipelineString(object):
         self.hef_path = self.__get_hef_path(network)
         self.nms_score_threshold = 0.3
         self.nms_iou_threshold = 0.45
-        self.current_path = os.path.dirname(os.path.abspath(__file__))
         self.labels_config = '' if True else f' config-path="params.labels_json"'
         self.video_sink = "xvimagesink" if show_display else "fakesink"
         self.sync = "false"
@@ -82,3 +82,4 @@ class PipelineString(object):
     @staticmethod
     def QUEUE(name, max_size_buffers=3, max_size_bytes=0, max_size_time=0, leaky='no'):
         return f"queue name={name} leaky={leaky} max-size-buffers={max_size_buffers} max-size-bytes={max_size_bytes} max-size-time={max_size_time} ! "
+
