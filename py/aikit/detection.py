@@ -1,3 +1,5 @@
+import logging
+
 import gi
 
 from py.aikit.pipeline_string import PipelineString
@@ -7,35 +9,32 @@ from py.params import Parameters
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst
 import hailo
-from py.aikit.hailo_rpi_common import (get_caps_from_pad, GStreamerApp, GStreamerSharedData, )
+from py.aikit.hailo_rpi_common import (get_caps_from_pad, GStreamerApp, GStreamerData, )
+
+log = logging.getLogger(__name__)
 
 
-# -----------------------------------------------------------------------------------------------
-# User Gstreamer Application
-# -----------------------------------------------------------------------------------------------
-
-# This class inherits from the hailo_rpi_common.GStreamerApp class
-class GStreamerDetectionApp(GStreamerApp, MultiProcessorRunner):
-    def __init__(self, params: Parameters, shared_data: GStreamerSharedData):
+class AiPersonDetector(GStreamerApp, MultiProcessorRunner):
+    def __init__(self, params: Parameters, shared_data: GStreamerData):
         # Call the parent class constructor
-        super().__init__(params, shared_data, GStreamerDetectionApp.callback_function)
-
-        print('model', self.params.network)
-        self.create_pipeline()
-
-    def get_pipeline_string(self) -> str:
-        return PipelineString(network=self.params.network,
-                              video_source=self.params.video_input,
-                              show_display=self.params.show_display,
-                              show_fps=self.params.show_fps).get_pipeline_string()
+        super().__init__(source_type=params.get_source_type(),
+                         video_input=params.video_input,
+                         show_fps=params.show_fps,
+                         shared_data=shared_data,
+                         on_probe_callback=AiPersonDetector.on_probe,
+                         pipeline_string=PipelineString(network=params.network,
+                                                        source_type=params.get_source_type(),
+                                                        video_source=params.video_input,
+                                                        show_display=params.show_display,
+                                                        show_fps=params.show_fps).get_pipeline_string())
 
     # -----------------------------------------------------------------------------------------------
     # User-defined callback function
+    # This is the callback function that will be called when data is available from the pipeline
     # -----------------------------------------------------------------------------------------------
 
     @staticmethod
-    # This is the callback function that will be called when data is available from the pipeline
-    def callback_function(pad, info, user_data):
+    def on_probe(pad, info, user_data):
         # Get the GstBuffer from the probe info
         buffer = info.get_buffer()
         # Check if the buffer is valid
@@ -59,6 +58,7 @@ class GStreamerDetectionApp(GStreamerApp, MultiProcessorRunner):
             label = detection.get_label()
             bbox = detection.get_bbox()
             confidence = detection.get_confidence()
+
             if label == "person":
                 string_to_print += f"Detection: {label} {confidence:.2f}\n"
                 detection_count += 1
@@ -68,5 +68,5 @@ class GStreamerDetectionApp(GStreamerApp, MultiProcessorRunner):
         else:
             user_data.detected.value = 0
 
-        print(string_to_print)
+        log.debug(string_to_print)
         return Gst.PadProbeReturn.OK

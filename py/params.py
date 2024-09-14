@@ -40,6 +40,17 @@ class Parameters(object):
         self.show_fps: bool = show_fps
         self.verbose: bool = verbose
 
+    def get_source_type(self) -> str:
+        # This function will return the source type based on the input source
+        # return values can be "file", "mipi" or "usb"
+        if self.video_input.startswith("/dev/video"):
+            return 'usb'
+        else:
+            if self.video_input.startswith("rpi"):
+                return 'rpi'
+            else:
+                return 'file'
+
     def __str__(self):
         return 'PARAMS:\n  ' + '\n  '.join(['---',  #
                                             f'network: {self.network}',  #

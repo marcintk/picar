@@ -1,8 +1,7 @@
+import logging
 import sys
 
 import gi
-
-from py.params import Parameters
 
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GLib, GObject
@@ -13,11 +12,7 @@ import setproctitle
 import cv2
 import signal
 
-# Try to import hailo python module
-try:
-    import hailo
-except ImportError:
-    sys.exit("Failed to import hailo python module. Make sure you are in hailo virtual environment.")
+log = logging.getLogger(__name__)
 
 
 # -----------------------------------------------------------------------------------------------
@@ -29,7 +24,7 @@ except ImportError:
 # 2. Setup a multiprocessing queue to pass the frame to the main thread
 # Additional variables and functions can be added to this class as needed
 
-class GStreamerSharedData(object):
+class GStreamerData(object):
     def __init__(self):
         self.frame_count = 0
         self.frame_queue = multiprocessing.Queue(maxsize=3)
@@ -68,7 +63,7 @@ def get_caps_from_pad(pad: Gst.Pad):
 
 
 # This function is used to display the user data frame
-def display_user_data_frame(user_data: GStreamerSharedData):
+def display_user_data_frame(user_data: GStreamerData):
     while user_data.running:
         frame = user_data.get_frame()
         if frame is not None:
@@ -77,35 +72,21 @@ def display_user_data_frame(user_data: GStreamerSharedData):
     cv2.destroyAllWindows()
 
 
-def get_source_type(input_source):
-    # This function will return the source type based on the input source
-    # return values can be "file", "mipi" or "usb"
-    if input_source.startswith("/dev/video"):
-        return 'usb'
-    else:
-        if input_source.startswith("rpi"):
-            return 'rpi'
-        else:
-            return 'file'
-
-
 # -----------------------------------------------------------------------------------------------
 # GStreamerApp class
 # -----------------------------------------------------------------------------------------------
 class GStreamerApp:
-    def __init__(self, params: Parameters, shared_data: GStreamerSharedData, callback_function):
-        self.params: Parameters = params
+    def __init__(self, source_type: str, video_input: str, show_fps: bool, shared_data: GStreamerData, on_probe_callback, pipeline_string: str):
+        self.source_type = source_type
+        self.video_source = video_input
         self.shared_data = shared_data
-        self.app_callback = callback_function
+        self.on_probe_callback = on_probe_callback
+
         self.current_path = os.path.dirname(os.path.abspath(__file__))
-        self.video_source = self.params.video_input
-        self.source_type = get_source_type(self.video_source)
-        self.pipeline = None
-        self.loop = None
         self.postprocess_dir = self.__get_tappas_postprocess_dir()
 
-        # Set the process title
-        setproctitle.setproctitle("Hailo Python App")
+        self.pipeline = self.__create_pipeline(pipeline_string, show_fps)
+        self.loop = GLib.MainLoop()
 
         # Set up signal handler for SIGINT (Ctrl-C)
         signal.signal(signal.SIGINT, self.shutdown)
@@ -120,22 +101,13 @@ class GStreamerApp:
 
         # Connect pad probe to the identity element
         identity = self.pipeline.get_by_name("identity_callback")
-        if identity is None:
-            print(
-                "Warning: identity_callback element not found, add <identity name=identity_callback> in your pipeline where you want the callback to be called.")
-        else:
-            identity_pad = identity.get_static_pad("src")
-            identity_pad.add_probe(Gst.PadProbeType.BUFFER, self.app_callback, self.shared_data)
+        identity_pad = identity.get_static_pad("src")
+        identity_pad.add_probe(Gst.PadProbeType.BUFFER, self.on_probe_callback, self.shared_data)
 
-        # Get xvimagesink element and disable QoS
-        # xvimagesink is instantiated by fpsdisplaysink
         hailo_display = self.pipeline.get_by_name("hailo_display")
-        if hailo_display is None:
-            print("Warning: hailo_display element not found, add <fpsdisplaysink name=hailo_display> to your pipeline to support fps display.")
-        else:
-            xvimagesink = hailo_display.get_by_name("xvimagesink0")
-            if xvimagesink is not None:
-                xvimagesink.set_property("qos", False)
+        xvimagesink = hailo_display.get_by_name("xvimagesink0")
+        if xvimagesink is not None:
+            xvimagesink.set_property("qos", False)
 
         # Disable QoS to prevent frame drops
         disable_qos(self.pipeline)
@@ -149,26 +121,6 @@ class GStreamerApp:
         # Clean up
         self.shared_data.running = False
         self.pipeline.set_state(Gst.State.NULL)
-
-    def create_pipeline(self):
-        # Initialize GStreamer
-        Gst.init(None)
-
-        pipeline_string = self.get_pipeline_string()
-        try:
-            self.pipeline = Gst.parse_launch(pipeline_string)
-        except Exception as e:
-            print(e)
-            print(pipeline_string)
-            sys.exit(1)
-
-        # Connect to hailo_display fps-measurements
-        if self.params.show_fps:
-            print("Showing FPS")
-            self.pipeline.get_by_name("hailo_display").connect("fps-measurements", self.on_fps_measurement)
-
-        # Create a GLib Main Loop
-        self.loop = GLib.MainLoop()
 
     def bus_call(self, bus, message, loop):
         t = message.type
@@ -191,14 +143,15 @@ class GStreamerApp:
             # Seek to the start (position 0) in nanoseconds
             success = self.pipeline.seek_simple(Gst.Format.TIME, Gst.SeekFlags.FLUSH, 0)
             if success:
-                print("Video rewound successfully. Restarting playback...")
+                log.warning("Video rewound successfully. Restarting playback...")
             else:
-                print("Error rewinding the video.")
+                log.error("Error rewinding the video.")
         else:
             self.shutdown()
 
     def shutdown(self, signum=None, frame=None):
-        print("Shutting down... Hit Ctrl-C again to force quit.")
+        log.warning("Shutting down... Hit Ctrl-C again to force quit.")
+
         signal.signal(signal.SIGINT, signal.SIG_DFL)
         self.pipeline.set_state(Gst.State.PAUSED)
         GLib.usleep(100000)  # 0.1 second delay
@@ -209,9 +162,27 @@ class GStreamerApp:
         self.pipeline.set_state(Gst.State.NULL)
         GLib.idle_add(self.loop.quit)
 
-    def get_pipeline_string(self):
-        # This is a placeholder function that should be overridden by the child class
-        return ""
+    @staticmethod
+    def __create_pipeline(pipeline_string: str, show_fps: bool):
+        try:
+            # Set the process title
+            setproctitle.setproctitle("Hailo Python Application")
+
+            # Initialize GStreamer
+            Gst.init(None)
+
+            pipeline = Gst.parse_launch(pipeline_string)
+
+            # Connect to hailo_display fps-measurements
+            if show_fps:
+                log.info("Showing FPS")
+                pipeline.get_by_name("hailo_display").connect("fps-measurements", GStreamerApp.on_fps_measurement)
+
+            return pipeline
+        except Exception as e:
+            print(e)
+            print(pipeline_string)
+            sys.exit(1)
 
     @staticmethod
     def on_fps_measurement(sink, fps, droprate, avgfps):
@@ -238,7 +209,6 @@ def handle_rgb(map_info, width, height):
 
 def handle_nv12(map_info, width, height):
     y_plane_size = width * height
-    uv_plane_size = width * height // 2
     y_plane = np.ndarray(shape=(height, width), dtype=np.uint8, buffer=map_info.data[:y_plane_size]).copy()
     uv_plane = np.ndarray(shape=(height // 2, width // 2, 2), dtype=np.uint8, buffer=map_info.data[y_plane_size:]).copy()
     return y_plane, uv_plane

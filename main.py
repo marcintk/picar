@@ -1,6 +1,6 @@
 import logging
 
-from py.aikit.detection import GStreamerDetectionApp
+from py.aikit.detection import AiPersonDetector
 from py.argparse import ArgsParser
 from py.multiprocessor import MultiProcessor
 from py.params import Parameters
@@ -24,7 +24,7 @@ def main():
 
         processor = MultiProcessor()
         processor.add(lambda: SenseDisplay(shared_data))
-        processor.add(lambda: GStreamerDetectionApp(params, shared_data))
+        processor.add(lambda: AiPersonDetector(params, shared_data))
         processor.start()
         processor.join()
 

@@ -2,10 +2,10 @@ import os
 
 
 class PipelineString(object):
-    def __init__(self, network: str, video_source: str, show_display: bool, show_fps: bool):
+    def __init__(self, network: str, source_type: str, video_source: str, show_display: bool, show_fps: bool):
         self.current_path = os.path.dirname(os.path.abspath(__file__))
         self.video_source = video_source
-        self.source_type = self.get_source_type(video_source)
+        self.source_type = source_type
         self.show_fps = show_fps
         self.hef_path = self.__get_hef_path(network)
         self.batch_size = 2
@@ -66,18 +66,6 @@ class PipelineString(object):
             return os.path.join(self.current_path, './resources/yolox_s_leaky_h8l_mz.hef')
         else:
             assert False, "Invalid network type"
-
-    @staticmethod
-    def get_source_type(video_source: str):
-        # This function will return the source type based on the input source
-        # return values can be "file", "mipi" or "usb"
-        if video_source.startswith("/dev/video"):
-            return 'usb'
-        else:
-            if video_source.startswith("rpi"):
-                return 'rpi'
-            else:
-                return 'file'
 
     @staticmethod
     def QUEUE(name, max_size_buffers=3, max_size_bytes=0, max_size_time=0, leaky='no'):

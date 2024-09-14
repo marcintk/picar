@@ -1,3 +1,4 @@
+import logging
 import time
 
 from sense_hat import SenseHat
@@ -6,6 +7,8 @@ from py.multiprocessor import MultiProcessorRunner
 from py.shared_data import SharedData
 
 _RED = (255, 0, 0)
+
+log = logging.getLogger(__name__)
 
 
 class SenseDisplay(MultiProcessorRunner):
@@ -22,10 +25,10 @@ class SenseDisplay(MultiProcessorRunner):
         self.sense.clear()
 
     def run(self) -> None:
-        print("SenseDisplay started!")
+        log.debug("SenseDisplay started!")
 
         while True:
-            print("SenseDisplay: detected=", self.shared_data.detected.value)
+            log.debug("SenseDisplay: detected=%d", self.shared_data.detected.value)
 
             if self.shared_data.detected.value > 0:
                 self.show(self.shared_data.detected.value)

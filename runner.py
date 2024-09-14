@@ -2,35 +2,24 @@ import multiprocessing
 import os
 import time
 
-from py.aikit.detection import GStreamerDetectionApp, user_app_callback_class
+from py.aikit.detection import AiPersonDetector, user_app_callback_class
 from py.aikit.hailo_rpi_common import get_default_parser
 from py.sensehat.sense import SenseDisplay
 
 user_data = user_app_callback_class()
 sense = SenseDisplay()
 
+
 def worker1():
     parser = get_default_parser()
     # Add additional arguments here
-    parser.add_argument(
-        "--network",
-        default="yolov6n",
-        choices=['yolov6n', 'yolov8s', 'yolox_s_leaky'],
-        help="Which Network to use, default is yolov6n",
-    )
-    parser.add_argument(
-        "--hef-path",
-        default=None,
-        help="Path to HEF file",
-    )
-    parser.add_argument(
-        "--labels-json",
-        default=None,
-        help="Path to costume labels JSON file",
-    )
+    parser.add_argument("--network", default="yolov6n", choices=['yolov6n', 'yolov8s', 'yolox_s_leaky'], help="Which Network to use, default is yolov6n", )
+    parser.add_argument("--hef-path", default=None, help="Path to HEF file", )
+    parser.add_argument("--labels-json", default=None, help="Path to costume labels JSON file", )
     args = parser.parse_args()
-    app = GStreamerDetectionApp(args, user_data)
+    app = AiPersonDetector(args, user_data)
     app.run()
+
 
 def worker2():
     while True:

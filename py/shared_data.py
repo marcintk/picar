@@ -4,10 +4,10 @@
 # Inheritance from the app_callback_class
 import multiprocessing
 
-from py.aikit.hailo_rpi_common import GStreamerSharedData
+from py.aikit.hailo_rpi_common import GStreamerData
 
 
-class SharedData(GStreamerSharedData):
+class SharedData(GStreamerData):
     def __init__(self):
         super().__init__()
         self.detected = multiprocessing.Value('i', 0)
