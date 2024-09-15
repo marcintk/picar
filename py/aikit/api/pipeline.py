@@ -1,13 +1,13 @@
-import logging
-import sys
-
 import gi
 
+gi.require_version('Gst', '1.0')  # define before importing Gst
+
+from gi.repository import Gst
 from py.aikit.api.commons import disable_qos
 
-gi.require_version('Gst', '1.0')
-from gi.repository import Gst
+import logging
 import multiprocessing
+import sys
 import setproctitle
 
 log = logging.getLogger(__name__)
@@ -46,13 +46,12 @@ class GStreamerData(object):
 # GStreamerApp class
 # -----------------------------------------------------------------------------------------------
 class Pipeline:
-
     def __init__(self, pipeline_string: str, show_fps: bool):
         self.pipeline = self.__create_pipeline(pipeline_string, show_fps)
 
     # Add a watch for messages on the pipeline's bus
     def add_watch_to_bus(self, bus_call, loop) -> None:
-        bus = self.pipeline.setup_bus()
+        bus = self.pipeline.get_bus()
         bus.add_signal_watch()
         bus.connect("message", bus_call, loop)
 

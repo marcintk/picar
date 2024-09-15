@@ -1,16 +1,16 @@
-import logging
-
 import gi
-import hailo
-from gi.repository import Gst
 
+gi.require_version('Gst', '1.0')  # define before importing Gst
+
+from gi.repository import Gst
 from py.aikit.api.commons import (get_caps_from_pad, )
 from py.aikit.api.pipeline_string import PipelineString
 from py.aikit.api.streamer import HailoGStreamer
 from py.multiprocessor import MultiProcessor
 from py.params import Parameters
 
-gi.require_version('Gst', '1.0')
+import logging
+import hailo
 
 log = logging.getLogger(__name__)
 

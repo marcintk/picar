@@ -1,11 +1,11 @@
-import logging
-
 import gi
 
+gi.require_version('Gst', '1.0')  # define before importing Gst
+
+from gi.repository import Gst, GLib
 from py.aikit.api.pipeline import Pipeline
 
-gi.require_version('Gst', '1.0')
-from gi.repository import Gst, GLib
+import logging
 import multiprocessing
 import signal
 

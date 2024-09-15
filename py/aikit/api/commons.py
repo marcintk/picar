@@ -1,10 +1,12 @@
-import logging
-
 import gi
-import numpy as np
+
+gi.require_version('Gst', '1.0')  # define before importing Gst
+
 from gi.repository import Gst, GObject
 
-gi.require_version('Gst', '1.0')
+import logging
+import numpy as np
+
 log = logging.getLogger(__name__)
 
 
@@ -31,7 +33,8 @@ def get_caps_from_pad(pad: Gst.Pad):
 # ---------------------------------------------------------
 
 def handle_rgb(map_info, width, height):
-    # The copy() method is used to create a copy of the numpy array. This is necessary because the original numpy array is created from buffer data, and it does not own the data it represents. Instead, it's just a view of the buffer's data.
+    # The copy() method is used to create a copy of the numpy array. This is necessary because the original numpy array is created from buffer data,
+    # and it does not own the data it represents. Instead, it's just a view of the buffer's data.
     return np.ndarray(shape=(height, width, 3), dtype=np.uint8, buffer=map_info.data).copy()
 
 
