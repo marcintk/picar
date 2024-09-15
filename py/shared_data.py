@@ -4,10 +4,10 @@
 # Inheritance from the app_callback_class
 import multiprocessing
 
-from py.aikit.gstreamer_app import GStreamerData
+from py.aikit.api.streamer import HailoGStreamer
 
 
-class SharedData(GStreamerData):
+class SharedData(HailoGStreamer.Data):
     def __init__(self):
         super().__init__()
         self.detected = multiprocessing.Value('i', 0)

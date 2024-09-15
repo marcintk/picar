@@ -4,9 +4,9 @@ import gi
 import hailo
 from gi.repository import Gst
 
-from py.aikit.gstreamer_app import GStreamerApp, GStreamerData
-from py.aikit.hailo_rpi_common import (get_caps_from_pad, )
-from py.aikit.pipeline_string import PipelineString
+from py.aikit.api.commons import (get_caps_from_pad, )
+from py.aikit.api.pipeline_string import PipelineString
+from py.aikit.api.streamer import HailoGStreamer
 from py.multiprocessor import MultiProcessor
 from py.params import Parameters
 
@@ -15,8 +15,8 @@ gi.require_version('Gst', '1.0')
 log = logging.getLogger(__name__)
 
 
-class AiPersonDetector(GStreamerApp, MultiProcessor.Runner):
-    def __init__(self, params: Parameters, shared_data: GStreamerData):
+class AiPersonDetector(HailoGStreamer, MultiProcessor.Runner):
+    def __init__(self, params: Parameters, shared_data: HailoGStreamer.Data):
         super().__init__(source_type=params.get_source_type(),
                          video_input=params.video_input,
                          show_fps=params.show_fps,
@@ -35,10 +35,9 @@ class AiPersonDetector(GStreamerApp, MultiProcessor.Runner):
 
     @staticmethod
     def on_probe(pad, info, user_data):
-        # Get the GstBuffer from the probe info
-        buffer = info.get_buffer()
-        # Check if the buffer is valid
-        if buffer is None:
+        buffer = info.get_buffer()  # Get the GstBuffer from the probe info
+
+        if buffer is None:  # Check if the buffer is valid
             return Gst.PadProbeReturn.OK
 
         # Using the user_data to count the number of frames
