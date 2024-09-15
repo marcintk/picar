@@ -1,7 +1,10 @@
+import logging
 import multiprocessing
 import os
 from collections.abc import Callable
 from multiprocessing import Process
+
+log = logging.getLogger(__name__)
 
 
 class MultiProcessor(object):
@@ -25,20 +28,20 @@ class MultiProcessor(object):
 
     def start(self) -> 'MultiProcessor':
         # printing main program process id
-        print("Main process id: {}".format(os.getpid()))
+        log.info("Main process id: {}".format(os.getpid()))
 
         # starting processes
         for process in self.processes:
             process.start()
-            print("Sub-process started: {}".format(process.pid))
+            log.info("Sub-process started: {}".format(process.pid))
 
         return self
 
     def join(self) -> None:
         # wait until processes are finished
         for process in self.processes:
-            print("Waiting on process: {}".format(process.pid))
+            log.info("Waiting on process: {}".format(process.pid))
             process.join()
 
         # all processes finished
-        print("All processes finished execution!")
+        log.info("All processes finished execution!")

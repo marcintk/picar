@@ -1,4 +1,7 @@
+import logging
 import os
+
+log = logging.getLogger(__name__)
 
 
 class PipelineString(object):
@@ -26,7 +29,7 @@ class PipelineString(object):
                                f"nms-iou-threshold={self.nms_iou_threshold} "
                                f"output-format-type=HAILO_FORMAT_TYPE_FLOAT32")
 
-        print('model', network)
+        log.info('model=%s', network)
 
     def get_pipeline_string(self) -> str:
         if self.source_type == "rpi":
@@ -53,7 +56,9 @@ class PipelineString(object):
             "queue_hailofilter") + f"hailofilter so-path={self.default_postprocess_so} {self.labels_config} qos=false ! " + self.QUEUE("queue_hmuc") + "hmux.sink_1 " + "hmux. ! " + self.QUEUE(
             "queue_hailo_python") + self.QUEUE("queue_user_callback") + "identity name=identity_callback ! " + self.QUEUE("queue_hailooverlay") + "hailooverlay ! " + self.QUEUE(
             "queue_videoconvert") + "videoconvert n-threads=3 qos=false ! " + self.QUEUE("queue_hailo_display") + f"fpsdisplaysink video-sink={self.video_sink} name=hailo_display sync={self.sync} text-overlay={self.show_fps} signal-fps-measurements=true ")
-        print(pipeline_string)
+
+        log.info(pipeline_string)
+
         return pipeline_string
 
     def __get_hef_path(self, network: str):

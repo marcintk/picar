@@ -60,7 +60,7 @@ class GStreamerApp:
         signal.signal(signal.SIGINT, self.shutdown)
 
     def run(self) -> None:
-        print("GStreamer started!")
+        log.info("GStreamer started!")
 
         # Add a watch for messages on the pipeline's bus
         bus = self.pipeline.get_bus()
@@ -70,7 +70,7 @@ class GStreamerApp:
         # Connect pad probe to the identity element
         identity = self.pipeline.get_by_name("identity_callback")
         if identity is None:
-            print(
+            log.warning(
                 "Warning: identity_callback element not found, add <identity name=identity_callback> in your pipeline where you want the callback to be called.")
         else:
             identity_pad = identity.get_static_pad("src")
@@ -80,7 +80,7 @@ class GStreamerApp:
         # xvimagesink is instantiated by fpsdisplaysink
         hailo_display = self.pipeline.get_by_name("hailo_display")
         if hailo_display is None:
-            print("Warning: hailo_display element not found, add <fpsdisplaysink name=hailo_display> to your pipeline to support fps display.")
+            log.warning("Warning: hailo_display element not found, add <fpsdisplaysink name=hailo_display> to your pipeline to support fps display.")
         else:
             xvimagesink = hailo_display.get_by_name("xvimagesink0")
             if xvimagesink is not None:
@@ -102,7 +102,7 @@ class GStreamerApp:
     def bus_call(self, bus, message, loop):
         t = message.type
         if t == Gst.MessageType.EOS:
-            print("End-of-stream")
+            log.warning("End-of-stream")
             self.on_eos()
         elif t == Gst.MessageType.ERROR:
             err, debug = message.parse_error()
@@ -112,7 +112,7 @@ class GStreamerApp:
         elif t == Gst.MessageType.QOS:
             # Handle QoS message here
             qos_element = message.src.get_name()
-            print(f"QoS message received from {qos_element}")
+            log.warning(f"QoS message received from {qos_element}")
         return True
 
     def on_eos(self):
@@ -157,8 +157,8 @@ class GStreamerApp:
 
             return pipeline
         except Exception as e:
-            print(e)
-            print(pipeline_string)
+            log.error(e)
+            log.error(pipeline_string)
             sys.exit(1)
 
     @staticmethod
@@ -170,6 +170,6 @@ class GStreamerApp:
     def __get_tappas_postprocess_dir():
         tappas_postprocess_dir = os.environ.get('TAPPAS_POST_PROC_DIR', '')
         if tappas_postprocess_dir == '':
-            print("TAPPAS_POST_PROC_DIR environment variable is not set. Please set it to by sourcing setup_env.sh")
+            log.warning("TAPPAS_POST_PROC_DIR environment variable is not set. Please set it to by sourcing setup_env.sh")
             exit(1)
         return tappas_postprocess_dir
