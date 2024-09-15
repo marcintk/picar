@@ -3,7 +3,7 @@ import time
 
 from sense_hat import SenseHat
 
-from py.multiprocessor import MultiProcessorRunner
+from py.multiprocessor import MultiProcessor
 from py.shared_data import SharedData
 
 _RED = (255, 0, 0)
@@ -11,7 +11,7 @@ _RED = (255, 0, 0)
 log = logging.getLogger(__name__)
 
 
-class SenseDisplay(MultiProcessorRunner):
+class SenseDisplay(MultiProcessor.Runner):
     def __init__(self, shared_data: SharedData):
         self.shared_data: SharedData = shared_data
         self.sense: SenseHat = SenseHat()

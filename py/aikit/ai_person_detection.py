@@ -1,22 +1,22 @@
 import logging
 
 import gi
+import hailo
+from gi.repository import Gst
 
+from py.aikit.gstreamer_app import GStreamerApp, GStreamerData
+from py.aikit.hailo_rpi_common import (get_caps_from_pad, )
 from py.aikit.pipeline_string import PipelineString
-from py.multiprocessor import MultiProcessorRunner
+from py.multiprocessor import MultiProcessor
 from py.params import Parameters
 
 gi.require_version('Gst', '1.0')
-from gi.repository import Gst
-import hailo
-from py.aikit.hailo_rpi_common import (get_caps_from_pad, GStreamerApp, GStreamerData, )
 
 log = logging.getLogger(__name__)
 
 
-class AiPersonDetector(GStreamerApp, MultiProcessorRunner):
+class AiPersonDetector(GStreamerApp, MultiProcessor.Runner):
     def __init__(self, params: Parameters, shared_data: GStreamerData):
-        # Call the parent class constructor
         super().__init__(source_type=params.get_source_type(),
                          video_input=params.video_input,
                          show_fps=params.show_fps,

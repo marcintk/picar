@@ -4,25 +4,23 @@ from collections.abc import Callable
 from multiprocessing import Process
 
 
-class MultiProcessorRunner(object):
-    def run(self) -> None:
-        raise Exception('not implemented!')
-
-
-class _Wrapper(object):
-    def __init__(self, runner: Callable[[], MultiProcessorRunner]) -> None:
-        self.runner: Callable[[], MultiProcessorRunner] = runner
-
-    def target(self):
-        self.runner().run()
-
-
 class MultiProcessor(object):
+    class Runner(object):
+        def run(self) -> None:
+            raise Exception('not implemented!')
+
+    class __Wrapper(object):
+        def __init__(self, runner: Callable[[], 'MultiProcessor.Runner']) -> None:
+            self.runner: Callable[[], MultiProcessor.Runner] = runner
+
+        def target(self):
+            self.runner().run()
+
     def __init__(self) -> None:
         self.processes: [Process] = []
 
-    def add(self, runner: Callable[[], MultiProcessorRunner]) -> 'MultiProcessor':
-        self.processes.append(multiprocessing.Process(target=_Wrapper(runner).target))
+    def add(self, runner: Callable[[], Runner]) -> 'MultiProcessor':
+        self.processes.append(multiprocessing.Process(target=MultiProcessor.__Wrapper(runner).target))
         return self
 
     def start(self) -> 'MultiProcessor':

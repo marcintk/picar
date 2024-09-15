@@ -1,6 +1,6 @@
 import logging
 
-from py.aikit.detection import AiPersonDetector
+from py.aikit.ai_person_detection import AiPersonDetector
 from py.argparse import ArgsParser
 from py.multiprocessor import MultiProcessor
 from py.params import Parameters
