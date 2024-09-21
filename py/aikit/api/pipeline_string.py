@@ -71,7 +71,7 @@ def HAILO_OVERLAY() -> str:
 
 
 class PipelineString(object):
-    def __init__(self, network: str, source_type: str, video_source: str, show_display: bool, show_fps: bool):
+    def __init__(self, network: str, source_type: str, video_source: str, show_display: bool, show_fps: bool) -> None:
         self.hef_path = self.__get_hef_path(network)
         self.source_type = source_type
         self.video_source = video_source
@@ -88,7 +88,7 @@ class PipelineString(object):
         self.sync = "false"
 
     def get_pipeline_string(self) -> str:
-        muxer_variable = 'muxer_variable'
+        muxer_variable = 'hmuc'
         tee_variable = 't'
 
         return (HAILO_MUXER(variable=muxer_variable, parent=self.__source()) +
@@ -105,7 +105,7 @@ class PipelineString(object):
                                                                          nms_iou=self.nms_iou_threshold) +
                 QUEUE("hailofilter") + HAILO_FILTER(labels=self.labels_config) +
 
-                TEE_SINK(from_queue=QUEUE("muxer_variable"), muxer=muxer_variable, tee=tee_variable, sink_id=1, sinks=2) +
+                TEE_SINK(from_queue=QUEUE(muxer_variable), muxer=muxer_variable, tee=tee_variable, sink_id=1, sinks=2) +
                 QUEUE("hailo_python") +
                 QUEUE("user_callback") + IDENTITY() +
                 QUEUE("hailooverlay") + HAILO_OVERLAY() +
@@ -125,7 +125,7 @@ class PipelineString(object):
                         QUEUE("dec264") + "qtdemux ! h264parse ! avdec_h264 max-threads=2 ! " + VIDEO_RAW(format='I420'))
 
     @staticmethod
-    def __get_hef_path(network: str):
+    def __get_hef_path(network: str) -> str:
         if network == "yolov6n":
             return f'{RESOURCES}/yolov6n.hef'
         elif network == "yolov8s":
