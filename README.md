@@ -1,9 +1,7 @@
 # PiCar
 
-## Tasks
+## To Do
 
-* build project files
-* run simple person detection
 * add motors and keyboard control
 * explore tracking solutions
 
@@ -12,10 +10,10 @@
 * GPIO zero: https://gpiozero.readthedocs.io/en/latest/recipes.html#robot
 * SenseHat API: https://pythonhosted.org/sense-hat/api/
 * Hailo RPi5 Basic Pipelines: https://github.com/hailo-ai/hailo-rpi5-examples/blob/main/doc/basic-pipelines.md#hailo-rpi5-basic-pipelines
-* Car Detection and Tracking System for Toll Plazas - Raspberry Pi AI Kit: https://docs.edgeimpulse.com/experts/image-projects/vehicle-detection-raspberry-pi-ai-kit
+* Car Detection and Tracking System for Toll Plazas - Raspberry Pi AI
+  Kit: https://docs.edgeimpulse.com/experts/image-projects/vehicle-detection-raspberry-pi-ai-kit
 * GStreamer Tutorials: https://gstreamer.freedesktop.org/documentation/tutorials/index.html?gi-language=c
 * Multiprocessing in Python: https://www.geeksforgeeks.org/multiprocessing-python-set-1/
-* 
 
 ## Hardware
 
@@ -27,14 +25,6 @@
 ### AI Kit
 
 * About: https://www.raspberrypi.com/documentation/accessories/ai-kit.html#about
-
-
-### AI board
-
-* RASPBERRY PI 5: https://www.raspberrypi.com/products/raspberry-pi-5/
-* ORANGE PI: http://www.orangepi.org/
-* JETSON NANO (nvidia): https://developer.nvidia.com/buy-jetson?product=jetson_nano&location=US
-* Coral USB accelerator: https://a.co/d/dZcaVqX
 
 ### Camera
 
@@ -49,8 +39,6 @@
 * YOLOv8 on Raspberry Pi5: https://www.youtube.com/watch?v=ZebczOt90mU
 
 ## Installation
-
-
 
 ### Application
 
@@ -70,15 +58,13 @@ install python libraries to the virtual environment
 ## Usage
 
 ```
-> python main.py                                         (press q for exit)
+> source setup_env.sh
+> python main.py [options]
 
 Examples:
-> python main.py -h                                      (display help and possible paremeters)
-> python main.py -rtsp -fr 640 320                       (use rtps input and resize image)
-> python main.py -vi media/car-and-pedestrian-video.mp4  (use video file as an input)
-> python main.py -cu=mps                                 (use MPS instead of CPU)
-> python main.py --no-display                            (do not show a video display)
-> python main.py -d=NONE                                 (drop detection)
+> python main.py -h                                      (display help)
+> python main.py --input rpi --network yolov8s           (use pi camera and 8s yolo model)
+> python main.py --input rpi --nv                        (do not output video)
 > python main.py -v                                      (print more information)
 ```
 
@@ -86,15 +72,4 @@ Examples:
 
 ```
 rpicam-still --list-cameras          (to display attached cameras)
-```
-
-### Camera
-
-Create '.env' file in the main directory with 4 properties:
-
-```
-CAMERA_IP=<IP>:<PORT>
-CAMERA_CHANNEL=<CHANNEL>
-CAMERA_USER=<USER>
-CAMERA_PASSWORD=<PASS>
 ```

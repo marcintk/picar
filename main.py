@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 
 
 def main():
-    logging.basicConfig(level=logging.INFO, format='[%(levelname)s | %(name)-10s] %(message)s')
+    logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s | %(name)-10s] - %(message)s')
 
     try:
         params: Parameters = ArgsParser().parse()

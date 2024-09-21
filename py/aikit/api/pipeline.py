@@ -98,6 +98,8 @@ class Pipeline:
 
             pipeline = Gst.parse_launch(pipeline_string)
 
+            log.info(pipeline_string)
+            
             # Connect to hailo_display fps-measurements
             if show_fps:
                 log.info("Showing FPS")
@@ -112,6 +114,4 @@ class Pipeline:
     @staticmethod
     def on_fps_measurement(sink, fps, droprate, avgfps):
         print(f"FPS: {fps:.2f}, Droprate: {droprate:.2f}, Avg FPS: {avgfps:.2f}")
-        return True  # @staticmethod  # def __get_tappas_postprocess_dir():  #     tappas_postprocess_dir = os.environ.get('TAPPAS_POST_PROC_DIR',
-        # '')  #     if tappas_postprocess_dir == '':  #         log.warning("TAPPAS_POST_PROC_DIR environment variable is not set. Please set it to by
-        # sourcing setup_env.sh")  #         exit(1)  #     return tappas_postprocess_dir
+        return True

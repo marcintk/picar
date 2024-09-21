@@ -25,7 +25,7 @@ class SenseDisplay(MultiProcessor.Runner):
         self.sense.clear()
 
     def run(self) -> None:
-        log.debug("SenseDisplay started!")
+        log.info("SenseDisplay started!")
 
         while True:
             log.debug("SenseDisplay: detected=%d", self.shared_data.detected.value)
