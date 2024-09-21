@@ -16,11 +16,11 @@ log = logging.getLogger(__name__)
 
 
 class AiPersonDetector(HailoGStreamer, MultiProcessor.Runner):
-    def __init__(self, params: Parameters, shared_data: HailoGStreamer.Data):
+    def __init__(self, params: Parameters, data: HailoGStreamer.Data):
         super().__init__(source_type=params.get_source_type(),
                          video_input=params.video_input,
                          show_fps=params.show_fps,
-                         shared_data=shared_data,
+                         data=data,
                          on_probe_callback=AiPersonDetector.on_probe,
                          pipeline_string=PipelineString(network=params.network,
                                                         source_type=params.get_source_type(),
@@ -63,9 +63,9 @@ class AiPersonDetector(HailoGStreamer, MultiProcessor.Runner):
                 detection_count += 1
 
         if detection_count > 0:
-            user_data.detected.value = 9 if detection_count > 9 else detection_count
+            user_data.person_detected.value = 9 if detection_count > 9 else detection_count
         else:
-            user_data.detected.value = 0
+            user_data.person_detected.value = 0
 
         log.debug(string_to_print)
         return Gst.PadProbeReturn.OK

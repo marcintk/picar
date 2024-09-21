@@ -32,10 +32,10 @@ class HailoGStreamer:
         def get_frame(self):
             return None if self.frame_queue.empty() else self.frame_queue.get()
 
-    def __init__(self, source_type: str, video_input: str, show_fps: bool, shared_data: Data, on_probe_callback, pipeline_string: str):
+    def __init__(self, source_type: str, video_input: str, show_fps: bool, data: Data, on_probe_callback, pipeline_string: str):
         self.source_type = source_type
         self.video_source = video_input
-        self.shared_data = shared_data
+        self.data = data
         self.on_probe_callback = on_probe_callback
         self.pipeline = Pipeline(pipeline_string, show_fps)
         self.loop = GLib.MainLoop()
@@ -47,14 +47,14 @@ class HailoGStreamer:
         log.info("GStreamer started!")
 
         self.pipeline.add_watch_to_bus(self.__bus_call, self.loop)
-        self.pipeline.connect_pad_probe_to_identity_element(self.on_probe_callback, self.shared_data)
+        self.pipeline.connect_pad_probe_to_identity_element(self.on_probe_callback, self.data)
         self.pipeline.disable_qos()
         self.pipeline.change_state_to(Gst.State.PLAYING)
 
         self.loop.run()  # Run the GLib event loop
 
         # Clean up
-        self.shared_data.running = False
+        self.data.running = False
         self.pipeline.cleanup()
 
     def __bus_call(self, bus, message, loop):

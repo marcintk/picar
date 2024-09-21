@@ -7,7 +7,7 @@ import multiprocessing
 from py.aikit.api.streamer import HailoGStreamer
 
 
-class SharedData(HailoGStreamer.Data):
+class ExchangeData(HailoGStreamer.Data):
     def __init__(self):
         super().__init__()
-        self.detected = multiprocessing.Value('i', 0)
+        self.person_detected = multiprocessing.Value('i', 0)

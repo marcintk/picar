@@ -59,9 +59,7 @@ class Pipeline:
     def connect_pad_probe_to_identity_element(self, on_probe_callback, shared_data) -> None:
         identity = self.pipeline.get_by_name("identity_callback")
         if identity is None:
-            log.warning(
-                "Warning: identity_callback element not found, add <identity name=identity_callback> in your pipeline where you want the callback to be "
-                "called.")
+            log.warning("identity_callback element not found, add <identity name=identity_callback> in your pipeline where you want the callback to be called.")
         else:
             identity_pad = identity.get_static_pad("src")
             identity_pad.add_probe(Gst.PadProbeType.BUFFER, on_probe_callback, shared_data)
@@ -69,7 +67,7 @@ class Pipeline:
     def disable_qos(self) -> None:
         hailo_display = self.pipeline.get_by_name("hailo_display")
         if hailo_display is None:
-            log.warning("Warning: hailo_display element not found, add <fpsdisplaysink name=hailo_display> to your pipeline to support fps display.")
+            log.warning("hailo_display element not found, add <fpsdisplaysink name=hailo_display> to your pipeline to support fps display.")
         else:
             xvimagesink = hailo_display.get_by_name("xvimagesink0")
             if xvimagesink is not None:
@@ -98,11 +96,11 @@ class Pipeline:
 
             pipeline = Gst.parse_launch(pipeline_string)
 
-            log.info(pipeline_string)
-            
+            log.info('pipeline_string:\n%s', pipeline_string)
+
             # Connect to hailo_display fps-measurements
             if show_fps:
-                log.info("Showing FPS")
+                log.info("Showing FPS activated.")
                 pipeline.get_by_name("hailo_display").connect("fps-measurements", Pipeline.on_fps_measurement)
 
             return pipeline

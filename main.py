@@ -2,10 +2,11 @@ import logging
 
 from py.aikit.ai_person_detection import AiPersonDetector
 from py.argparse import ArgsParser
+from py.exchange_data import ExchangeData
+from py.motors.robot import RobotController
 from py.multiprocessor import MultiProcessor
 from py.params import Parameters
 from py.sensehat.sense import SenseDisplay
-from py.shared_data import SharedData
 
 log = logging.getLogger(__name__)
 
@@ -20,11 +21,11 @@ def main():
         if params.verbose:
             log.setLevel(logging.DEBUG)
 
-        shared_data = SharedData()
-
+        data = ExchangeData()
         processor = MultiProcessor()
-        processor.add(lambda: SenseDisplay(shared_data))
-        processor.add(lambda: AiPersonDetector(params, shared_data))
+        processor.add(lambda: SenseDisplay(data))
+        processor.add(lambda: RobotController(data))
+        processor.add(lambda: AiPersonDetector(params, data))
         processor.start()
         processor.join()
 

@@ -1,43 +1,46 @@
+import logging
 from time import sleep
 
 from gpiozero import Motor, Robot
 
+from py.exchange_data import ExchangeData
+from py.multiprocessor import MultiProcessor
 
-class RobotControl(object):
-    def __init__(self):
-        left = Motor(27, 22)
-        right = Motor(6, 5)
-        self._robot = Robot(left=left, right=right)
+log = logging.getLogger(__name__)
 
-    def forward(self):
+
+class RobotController(MultiProcessor.Runner):
+    def __init__(self, shared_data: ExchangeData):
+        self.__exchange_data: ExchangeData = shared_data
+        self.__robot = Robot(left=Motor(27, 22), right=Motor(6, 5))
+
+    def run(self) -> None:
+        log.info("Robot started!")
+
+        while True:
+            if self.__exchange_data.person_detected.value > 0:
+                self.turn_left()
+                sleep(0.1)
+                self.stop()
+
+            sleep(5)
+
+    def move_forward(self):
         print('forward')
-        self._robot.forward()
+        self.__robot.forward()
 
-    def backward(self):
+    def move_backward(self):
         print('backward')
-        self._robot.backward()
+        self.__robot.backward()
 
-    def left(self):
+    def turn_left(self):
         print('left')
-        self._robot.left()
+        self.__robot.left()
 
-    def right(self):
+    def turn_right(self):
         print('right')
-        self._robot.right()
+        self.__robot.right()
 
     def stop(self):
         print('stop')
-        self._robot.stop()
-
-
-if __name__ == "__main__":
-    control = RobotControl()
-    control.forward()
-    sleep(1)
-    control.backward()
-    sleep(1)
-    control.left()
-    sleep(1)
-    control.right()
-    sleep(1)
-    control.stop()
+        self.__robot.stop()
