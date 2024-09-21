@@ -1,8 +1,9 @@
 RESOURCES = './py/aikit/api/resources/'
+HAILO_POST_SO = 'libyolo_hailortpp_post.so'
 
 
 def QUEUE(name, max_size_buffers: int = 3, max_size_bytes: int = 0, max_size_time: int = 0, leaky: str = 'no') -> str:
-    return f"queue name={name} leaky={leaky} max-size-buffers={max_size_buffers} max-size-bytes={max_size_bytes} max-size-time={max_size_time} ! "
+    return f"queue name=queue_{name} leaky={leaky} max-size-buffers={max_size_buffers} max-size-bytes={max_size_bytes} max-size-time={max_size_time} ! "
 
 
 def VIDEO_RAW(framerate: str = '', format: str = '', width: int | None = None, height: int | None = None, pixel_aspect_ratio: str = '') -> str:
@@ -39,8 +40,20 @@ def TEE(variable: str) -> str:
     return f"tee name={variable} ! "
 
 
+def TEE_SINK(from_queue: str, muxer: str, tee: str, sink_id: int, sinks: int) -> str:
+    return "{}{}.sink_{} {}. ! ".format(from_queue, muxer, sink_id, muxer if (sinks == sink_id + 1) else tee)
+
+
 def FPS_DISPLAY_SINK(video_sink: str, sync: str, show_fps: bool) -> str:
     return f"fpsdisplaysink video-sink={video_sink} name=hailo_display sync={sync} text-overlay={show_fps} signal-fps-measurements=true"
+
+
+def IDENTITY() -> str:
+    return "identity name=identity_callback ! "
+
+
+def HAILO_MUXER(variable: str, parent: str) -> str:
+    return f"hailomuxer name={variable} {parent}"
 
 
 def HAILO_NET(hef_path: str, batch_size: int, nms_score: float, nms_iou: float) -> str:
@@ -49,7 +62,8 @@ def HAILO_NET(hef_path: str, batch_size: int, nms_score: float, nms_iou: float) 
 
 
 def HAILO_FILTER(labels: str) -> str:
-    return f"hailofilter so-path={RESOURCES}/libyolo_hailortpp_post.so {labels} qos=false ! "
+    return "hailofilter so-path={}{} qos=false ! ".format(f'{RESOURCES}/{HAILO_POST_SO}',
+                                                          f' config-path={labels}' if len(labels) > 0 else '')
 
 
 def HAILO_OVERLAY() -> str:
@@ -68,45 +82,47 @@ class PipelineString(object):
         self.network_width = 640
         self.network_height = 640
         self.network_format = "RGB"
-        self.labels_config = '' if True else f' config-path="params.labels_json"'
-        self.sync = "false"
         self.nms_score_threshold = 0.3
         self.nms_iou_threshold = 0.45
+        self.labels_config = ''
+        self.sync = "false"
 
     def get_pipeline_string(self) -> str:
-        return ("hailomuxer name=hmux " + self.__source() +
-                QUEUE("queue_scale") + VIDEO_SCALE(threads=2) +
-                QUEUE("queue_src_convert") + VIDEO_CONVERT(threads=3, name='src_convert', qos='false', format=self.network_format, width=self.network_width,
-                                                           height=self.network_height, pixel_aspect_ratio='1/1') +
+        muxer_variable = 'muxer_variable'
+        tee_variable = 't'
 
-                TEE(variable='t') +
-                QUEUE("bypass_queue", max_size_buffers=20) + "hmux.sink_0 t. ! " +
-                QUEUE("queue_hailonet") + VIDEO_CONVERT(threads=3) + HAILO_NET(hef_path=self.hef_path,
-                                                                               batch_size=self.batch_size,
-                                                                               nms_score=self.nms_score_threshold,
-                                                                               nms_iou=self.nms_iou_threshold) +
-                QUEUE("queue_hailofilter") + HAILO_FILTER(labels=self.labels_config) +
-                QUEUE("queue_hmuc") + "hmux.sink_1 hmux. ! " +
-                QUEUE("queue_hailo_python") +
-                QUEUE("queue_user_callback") + "identity name=identity_callback ! " +
-                QUEUE("queue_hailooverlay") + HAILO_OVERLAY() +
-                QUEUE("queue_videoconvert") + VIDEO_CONVERT(threads=3, qos='false') +
-                QUEUE("queue_hailo_display") + FPS_DISPLAY_SINK(video_sink=self.video_sink, sync=self.sync, show_fps=self.show_fps))
+        return (HAILO_MUXER(variable=muxer_variable, parent=self.__source()) +
+                QUEUE("scale") + VIDEO_SCALE(threads=2) +
+                QUEUE("src_convert") + VIDEO_CONVERT(threads=3, name='src_convert', qos='false', format=self.network_format, width=self.network_width,
+                                                     height=self.network_height, pixel_aspect_ratio='1/1') +
+
+                TEE(variable=tee_variable) +
+
+                TEE_SINK(from_queue=QUEUE("bypass", max_size_buffers=20), muxer=muxer_variable, tee=tee_variable, sink_id=0, sinks=2) +
+                QUEUE("hailonet") + VIDEO_CONVERT(threads=3) + HAILO_NET(hef_path=self.hef_path,
+                                                                         batch_size=self.batch_size,
+                                                                         nms_score=self.nms_score_threshold,
+                                                                         nms_iou=self.nms_iou_threshold) +
+                QUEUE("hailofilter") + HAILO_FILTER(labels=self.labels_config) +
+
+                TEE_SINK(from_queue=QUEUE("muxer_variable"), muxer=muxer_variable, tee=tee_variable, sink_id=1, sinks=2) +
+                QUEUE("hailo_python") +
+                QUEUE("user_callback") + IDENTITY() +
+                QUEUE("hailooverlay") + HAILO_OVERLAY() +
+                QUEUE("videoconvert") + VIDEO_CONVERT(threads=3, qos='false') +
+                QUEUE("hailo_display") + FPS_DISPLAY_SINK(video_sink=self.video_sink, sync=self.sync, show_fps=self.show_fps))
 
     def __source(self) -> str:
         match self.source_type:
             case "rpi":
                 return (f"libcamerasrc name=src_0 ! " + VIDEO_RAW(format=self.network_format, width=1536, height=864) +
-                        QUEUE("queue_src_scale") + VIDEO_SCALE(framerate='30/1',
-                                                               format=self.network_format,
-                                                               width=self.network_width,
-                                                               height=self.network_height))
+                        QUEUE("src_scale") + VIDEO_SCALE(framerate='30/1', format=self.network_format, width=self.network_width, height=self.network_height))
             case "usb":
                 return f"v4l2src device={self.video_source} name=src_0 ! " + VIDEO_RAW(framerate='30/1', width=640, height=480)
 
             case _:
                 return (f'filesrc location="{self.video_source}" name=src_0 ! ' +
-                        QUEUE("queue_dec264") + "qtdemux ! h264parse ! avdec_h264 max-threads=2 ! " + VIDEO_RAW(format='I420'))
+                        QUEUE("dec264") + "qtdemux ! h264parse ! avdec_h264 max-threads=2 ! " + VIDEO_RAW(format='I420'))
 
     @staticmethod
     def __get_hef_path(network: str):

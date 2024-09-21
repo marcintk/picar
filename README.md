@@ -26,17 +26,9 @@
 
 * About: https://www.raspberrypi.com/documentation/accessories/ai-kit.html#about
 
-### Camera
-
-* Foxeer Micro Cat 3 1200TVL 0.00001lux Super Low Light Night
-  Camera: https://a.co/d/4kiIgj4
-
 ## Links
 
 * Night Vision Basics: https://www.youtube.com/watch?v=UAeJHAFjwPM
-* Training YOLOv8 model: https://www.youtube.com/watch?v=m9fH9OWn8YM
-* YOLOv8 on MAC M1: https://www.youtube.com/watch?v=kEcWUZ8unmc
-* YOLOv8 on Raspberry Pi5: https://www.youtube.com/watch?v=ZebczOt90mU
 
 ## Installation
 
@@ -46,13 +38,6 @@
 upgrade system libraries
 > sudo apt update
 > sudo apt upgrade
-
-install pip3 and python        (if needed)
-> pip3 --version               (check the latest installed)
-> sudo apt install python3
-
-install python libraries to the virtual environment
-> pip3 install -r requirements.txt
 ```
 
 ## Usage
@@ -72,4 +57,5 @@ Examples:
 
 ```
 rpicam-still --list-cameras          (to display attached cameras)
+hailortcli fw-control identify       (status of hailo)
 ```
