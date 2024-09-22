@@ -1,0 +1,6 @@
+**/__pycache__/
+.gitconfig
+.idea
+hailo-rpi5-examples/
+venv_picar/
+hailort.log
