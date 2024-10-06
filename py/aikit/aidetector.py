@@ -1,6 +1,7 @@
 import gi
 
 from py.aikit.api.data import HailoData
+from py.aikit.frame_rate import FrameRate
 from py.exchange_data import ExchangeData
 
 gi.require_version('Gst', '1.0')  # define before importing Gst
@@ -24,20 +25,15 @@ class AiDetector(HailoGStreamer, MultiProcessor.Runner):
                          video_input=params.video_input,
                          show_fps=params.show_fps,
                          data=data,
-                         on_probe_callback=AiDetector.on_probe,
                          pipeline_string=PipelineString(network=params.network,
                                                         source_type=params.get_source_type(),
                                                         video_source=params.video_input,
                                                         show_display=params.show_display,
                                                         show_fps=params.show_fps).get_pipeline_string())
+        self.fps = FrameRate()
 
-    # -----------------------------------------------------------------------------------------------
-    # User-defined callback function
-    # This is the callback function that will be called when data is available from the pipeline
-    # -----------------------------------------------------------------------------------------------
+    def on_probe(self, pad, info, data: ExchangeData):
 
-    @staticmethod
-    def on_probe(pad, info, data: ExchangeData):
         buffer = info.get_buffer()  # Get the GstBuffer from the probe info
 
         if buffer is None:  # Check if the buffer is valid
@@ -46,14 +42,28 @@ class AiDetector(HailoGStreamer, MultiProcessor.Runner):
         # Using the user_data to count the number of frames
         data.increment()
 
+        # Calculate frames per second
+        (rate, last_changed, last_rate) = self.fps.probe()
+
         # Get the caps from the pad
-        format, width, height = get_caps_from_pad(pad)
+        (format, width, height) = get_caps_from_pad(pad)
 
         # Get the detections from the buffer
         roi = hailo.get_roi_from_buffer(buffer)
         detections = roi.get_objects_typed(hailo.HAILO_DETECTION)
+        detection_count = self.__detect_persons(detections)
+        data.new_persons_detected(9 if detection_count > 9 else detection_count)
 
-        # Parse the detections
+        if last_changed:
+            log.info(f'>> '
+                     f'frame count:{data.get_count()} '
+                     f'|| fps:{last_rate:.2f} (overall:{rate:.1f})'
+                     f', detected:{detection_count}.')
+
+        return Gst.PadProbeReturn.OK
+
+    @staticmethod
+    def __detect_persons(detections):
         detection_count = 0
         for detection in detections:
             label = detection.get_label()
@@ -63,7 +73,4 @@ class AiDetector(HailoGStreamer, MultiProcessor.Runner):
             if label == "person":
                 detection_count += 1
 
-        data.new_persons_detected(9 if detection_count > 9 else detection_count)
-
-        log.debug(f"Frame count: {data.get_count()}, Detection: persons:{detection_count}")
-        return Gst.PadProbeReturn.OK
+        return detection_count

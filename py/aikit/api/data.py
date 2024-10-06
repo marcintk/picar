@@ -3,8 +3,8 @@ import multiprocessing
 
 class HailoData:
     def __init__(self):
-        self.frame_count = 0
         self.frame_queue = multiprocessing.Queue(maxsize=3)  # set up a multiprocessing queue to pass the frame to the main thread
+        self.frame_count = 0
         self.running = True
 
     def increment(self):

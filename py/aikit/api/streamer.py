@@ -14,22 +14,24 @@ log = logging.getLogger(__name__)
 
 
 class HailoGStreamer:
-    def __init__(self, source_type: str, video_input: str, show_fps: bool, data: HailoData, on_probe_callback, pipeline_string: str):
+    def __init__(self, source_type: str, video_input: str, show_fps: bool, data: HailoData, pipeline_string: str):
         self.source_type = source_type
         self.video_source = video_input
         self.data = data
-        self.on_probe_callback = on_probe_callback
         self.pipeline = Pipeline(pipeline_string, show_fps)
         self.loop = GLib.MainLoop()
 
         # Set up signal handler for SIGINT (Ctrl-C)
         signal.signal(signal.SIGINT, self.shutdown)
 
+    def on_probe(self, pad, info, data: HailoData):
+        return Gst.PadProbeReturn.OK
+
     def run(self) -> None:
         log.info("GStreamer started!")
 
         self.pipeline.add_watch_to_bus(self.__bus_call, self.loop)
-        self.pipeline.connect_pad_probe_to_identity_element(self.on_probe_callback, self.data)
+        self.pipeline.connect_pad_probe_to_identity_element(self.on_probe, self.data)
         self.pipeline.disable_qos()
         self.pipeline.change_state_to(Gst.State.PLAYING)
 
@@ -40,25 +42,23 @@ class HailoGStreamer:
         self.pipeline.cleanup()
 
     def __bus_call(self, bus, message, loop):
-        t = message.type
-        if t == Gst.MessageType.EOS:
+        if message.type == Gst.MessageType.EOS:
             log.warning("End-of-stream")
             self.__on_eos()
-        elif t == Gst.MessageType.ERROR:
+        elif message.type == Gst.MessageType.ERROR:
             err, debug = message.parse_error()
-            print(f"Error: {err}, {debug}")
+            log.error(f"Error: {err}, {debug}")
             self.shutdown()
-        # QOS
-        elif t == Gst.MessageType.QOS:
-            # Handle QoS message here
+        elif message.type == Gst.MessageType.QOS:  # Handle QoS message here
             qos_element = message.src.get_name()
             log.warning(f"QoS message received from {qos_element}")
+
         return True
 
     def __on_eos(self):
         if self.source_type == "file":
-            # Seek to the start (position 0) in nanoseconds
-            success = self.pipeline.seek_simple()
+            success = self.pipeline.seek_simple()  # Seek to the start (position 0) in nanoseconds
+
             if success:
                 log.warning("Video rewound successfully. Restarting playback...")
             else:

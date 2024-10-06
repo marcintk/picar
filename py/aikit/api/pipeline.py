@@ -66,7 +66,7 @@ class Pipeline:
 
             pipeline = Gst.parse_launch(pipeline_string)
 
-            log.info('pipeline_string:\n%s', pipeline_string)
+            log.info('Pipeline string:\n%s', pipeline_string)
 
             # Connect to hailo_display fps-measurements
             if show_fps:
