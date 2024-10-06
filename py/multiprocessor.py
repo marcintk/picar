@@ -22,8 +22,11 @@ class MultiProcessor(object):
     def __init__(self) -> None:
         self.processes: [Process] = []
 
-    def add(self, runner: Callable[[], Runner]) -> 'MultiProcessor':
-        self.processes.append(multiprocessing.Process(target=MultiProcessor.__Wrapper(runner).target))
+        log.info(f'Multiprocessor with {os.cpu_count()} CPUs available.')
+
+    def add(self, runner: Callable[[], Runner], enable: bool = True) -> 'MultiProcessor':
+        if enable:
+            self.processes.append(multiprocessing.Process(target=MultiProcessor.__Wrapper(runner).target))
         return self
 
     def start(self) -> 'MultiProcessor':
@@ -45,3 +48,8 @@ class MultiProcessor(object):
 
         # all processes finished
         log.info("All processes finished execution!")
+
+    def terminate(self) -> None:
+        for process in self.processes:
+            process.terminate()
+            log.info("Sub-process terminated: {}".format(process.pid))

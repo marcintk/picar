@@ -1,4 +1,4 @@
-RESOURCES = './py/aikit/api/resources/'
+RESOURCES = './py/aikit/api/resources'
 HAILO_POST_SO = 'libyolo_hailortpp_post.so'
 
 
@@ -144,11 +144,7 @@ class PipelineString(object):
 
     @staticmethod
     def __get_hef_path(network: str) -> str:
-        if network == "yolov6n":
-            return f'{RESOURCES}/yolov6n.hef'
-        elif network == "yolov8s":
-            return f'{RESOURCES}/yolov8s_h8l.hef'
-        elif network == "yolox_s_leaky":
-            return f'{RESOURCES}/yolox_s_leaky_h8l_mz.hef'
+        if network in ["yolov6n", "yolov8s", "yolov8s_pose"]:
+            return f'{RESOURCES}/{network}.hef'
 
         assert False, f"Invalid network type: {network}!"

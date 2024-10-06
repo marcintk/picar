@@ -15,24 +15,27 @@ class SenseDisplay(MultiProcessor.Runner):
     def __init__(self, exchange_data: ExchangeData):
         self.__exchange_data: ExchangeData = exchange_data
         self.__sense: SenseHat = SenseHat()
-
-        self.__sense.set_rotation(180)
-
-    def show(self, digit: int):
-        self.__sense.show_letter(str(digit), text_colour=_RED)
-
-    def clear(self):
-        self.__sense.clear()
+        self.__last_display: int = 0
 
     def run(self) -> None:
         log.info("SenseDisplay started!")
 
-        while True:
-            log.debug("SenseDisplay: detected=%d", self.__exchange_data.person_detected.value)
+        try:
+            self.__sense.set_rotation(270)
 
-            if self.__exchange_data.person_detected.value > 0:
-                self.show(self.__exchange_data.person_detected.value)
-            else:
-                self.__sense.clear()
+            while True:
+                new_display = self.__exchange_data.persons_detected
 
-            time.sleep(0.1)
+                if self.__last_display != new_display:
+                    self.__last_display = new_display
+                    self.__sense.show_letter(str(new_display), text_colour=_RED)
+
+                    log.info("SenseDisplay: display=%d", new_display)
+
+                time.sleep(0.1)
+        except Exception as e:
+            log.warning(f"Interrupted: {e}!")
+        finally:
+            self.__sense.clear()
+
+        log.info("SenseDisplay stopped!")

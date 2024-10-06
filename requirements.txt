@@ -1,5 +1,6 @@
 gpiozero
-sense_hat
 numpy<2.0.0
-setproctitle
 opencv-python
+readchar
+sense_hat
+setproctitle
