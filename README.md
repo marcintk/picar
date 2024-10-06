@@ -2,7 +2,7 @@
 
 Project experimenting with Raspberry Pi 5, AI Kit, Sense Kit and Robot.
 
-![robot](robot.png)
+![robot](docs/images/robot.png)
 
 ## Hardware
 
@@ -35,23 +35,32 @@ Project experimenting with Raspberry Pi 5, AI Kit, Sense Kit and Robot.
 > sudo apt update && sudo apt full-upgrade
 > sudo apt install hailo-all
 
+# https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#pcie-gen-3-0
+enable PCIe Gen 3.0, this is optional, not certifed for Raspberry Pi5
+
 # https://www.raspberrypi.com/documentation/accessories/sense-hat.html#install
-> sudo apt install sense-hat
+> sudo apt install sense-hat (should be already present in the system)
 
 > sudo reboot
 
+# verification
+> hailortcli fw-control identify
+Executing on device: 0000:01:00.0
+Identifying board
+Control Protocol Version: 2
+Firmware Version: 4.18.0 (release,app,extended context switch buffer)
+Logger Version: 0
+Board Name: Hailo-8
+Device Architecture: HAILO8L
+Serial Number: HLDDLBB242600712
+Part Number: HM21LB1C2LAE
+Product Name: HAILO-8L AI ACC M.2 B+M KEY MODULE EXT TMP
+
+> git clone https://github.com/marcintk/picar
+> cd picar
 > source setup_env.sh
 > pip install --upgrade pip
 > pip install -r requirements.txt
-```
-
-### Issues:
-
-#### LGPIO: https://forums.raspberrypi.com/viewtopic.php?t=362657
-
-```
-> sudo apt remove python3-rpi.gpio
-> pip3 install rpi-lgpio
 ```
 
 ## Usage
@@ -64,8 +73,8 @@ or
 
 Examples:
 > python main.py -h                                      (display help)
-> python main.py --input rpi --network yolov8s           (use pi camera and 8s yolo model)
-> python main.py --input rpi --nv                        (do not output video)
+> python main.py --input rpi --network yolov6n           (use pi camera and 6n yolo model)
+> python main.py --input rpi -nv                         (do not output video)
 > python main.py -v                                      (print more information)
 ```
 

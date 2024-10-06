@@ -45,3 +45,8 @@ class MultiProcessor(object):
 
         # all processes finished
         log.info("All processes finished execution!")
+
+    def stop(self) -> None:
+        for process in self.processes:
+            process.terminate()
+            log.info("Sub-process stopped: {}".format(process.pid))

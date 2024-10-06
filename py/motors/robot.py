@@ -11,36 +11,31 @@ log = logging.getLogger(__name__)
 
 class RobotController(MultiProcessor.Runner):
     def __init__(self, shared_data: ExchangeData):
-        self.__exchange_data: ExchangeData = shared_data
+        self.__data: ExchangeData = shared_data
         self.__robot = Robot(left=Motor(27, 22), right=Motor(6, 5))
 
     def run(self) -> None:
         log.info("Robot started!")
 
-        while True:
-            if self.__exchange_data.person_detected.value > 0:
-                self.turn_left()
-                sleep(0.1)
-                self.stop()
+        try:
+            while True:
+                match self.__data.key_pressed:
+                    case 'k':
+                        self.__move(self.__robot.forward, 'forward')
+                    case 'j':
+                        self.__move(self.__robot.backward, 'backward')
+                    case 'h':
+                        self.__move(self.__robot.left, 'left')
+                    case 'l':
+                        self.__move(self.__robot.right, 'right')
+        except Exception as e:
+            log.warning(f"Interrupted: {e}!")
 
-            sleep(5)
+        log.info("Robot stopped!")
 
-    def move_forward(self):
-        log.info('forward')
-        self.__robot.forward()
+    def __move(self, move: lambda: [[], None], name: str, delay: float = 0.1) -> None:
+        log.info(f'{name}-{delay}s,stop')
 
-    def move_backward(self):
-        log.info('backward')
-        self.__robot.backward()
-
-    def turn_left(self):
-        log.info('left')
-        self.__robot.left()
-
-    def turn_right(self):
-        log.info('right')
-        self.__robot.right()
-
-    def stop(self):
-        log.info('stop')
+        move()
+        sleep(delay)
         self.__robot.stop()

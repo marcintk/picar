@@ -1,5 +1,7 @@
 import gi
 
+from py.exchange_data import ExchangeData
+
 gi.require_version('Gst', '1.0')  # define before importing Gst
 
 from gi.repository import Gst
@@ -34,15 +36,14 @@ class AiDetector(HailoGStreamer, MultiProcessor.Runner):
     # -----------------------------------------------------------------------------------------------
 
     @staticmethod
-    def on_probe(pad, info, user_data):
+    def on_probe(pad, info, data: ExchangeData):
         buffer = info.get_buffer()  # Get the GstBuffer from the probe info
 
         if buffer is None:  # Check if the buffer is valid
             return Gst.PadProbeReturn.OK
 
         # Using the user_data to count the number of frames
-        user_data.increment()
-        string_to_print = f"Frame count: {user_data.get_count()}\n"
+        data.increment()
 
         # Get the caps from the pad
         format, width, height = get_caps_from_pad(pad)
@@ -59,13 +60,9 @@ class AiDetector(HailoGStreamer, MultiProcessor.Runner):
             confidence = detection.get_confidence()
 
             if label == "person":
-                string_to_print += f"Detection: {label} {confidence:.2f}\n"
                 detection_count += 1
 
-        if detection_count > 0:
-            user_data.person_detected.value = 9 if detection_count > 9 else detection_count
-        else:
-            user_data.person_detected.value = 0
+        data.new_persons_detected(9 if detection_count > 9 else detection_count)
 
-        log.debug(string_to_print)
+        log.debug(f"Frame count: {data.get_count()}, Detection: persons:{detection_count}")
         return Gst.PadProbeReturn.OK
