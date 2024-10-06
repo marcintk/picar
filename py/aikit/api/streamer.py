@@ -1,38 +1,20 @@
 import gi
 
+from py.aikit.api.data import HailoData
+
 gi.require_version('Gst', '1.0')  # define before importing Gst
 
 from gi.repository import Gst, GLib
 from py.aikit.api.pipeline import Pipeline
 
 import logging
-import multiprocessing
 import signal
 
 log = logging.getLogger(__name__)
 
 
 class HailoGStreamer:
-    class Data(object):
-        def __init__(self):
-            self.frame_count = 0
-            self.frame_queue = multiprocessing.Queue(maxsize=3)  # set up a multiprocessing queue to pass the frame to the main thread
-            self.running = True
-
-        def increment(self):
-            self.frame_count += 1
-
-        def get_count(self):
-            return self.frame_count
-
-        def set_frame(self, frame):
-            if not self.frame_queue.full():
-                self.frame_queue.put(frame)
-
-        def get_frame(self):
-            return None if self.frame_queue.empty() else self.frame_queue.get()
-
-    def __init__(self, source_type: str, video_input: str, show_fps: bool, data: Data, on_probe_callback, pipeline_string: str):
+    def __init__(self, source_type: str, video_input: str, show_fps: bool, data: HailoData, on_probe_callback, pipeline_string: str):
         self.source_type = source_type
         self.video_source = video_input
         self.data = data

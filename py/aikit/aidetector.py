@@ -1,5 +1,6 @@
 import gi
 
+from py.aikit.api.data import HailoData
 from py.exchange_data import ExchangeData
 
 gi.require_version('Gst', '1.0')  # define before importing Gst
@@ -18,7 +19,7 @@ log = logging.getLogger(__name__)
 
 
 class AiDetector(HailoGStreamer, MultiProcessor.Runner):
-    def __init__(self, params: Parameters, data: HailoGStreamer.Data):
+    def __init__(self, params: Parameters, data: HailoData):
         super().__init__(source_type=params.get_source_type(),
                          video_input=params.video_input,
                          show_fps=params.show_fps,

@@ -7,7 +7,7 @@ from enum import Enum
 
 from readchar import key
 
-from py.aikit.api.streamer import HailoGStreamer
+from py.aikit.api.data import HailoData
 
 
 class Keystroke(Enum):
@@ -38,7 +38,7 @@ class Keystroke(Enum):
         return Keystroke.NONE
 
 
-class ExchangeData(HailoGStreamer.Data):
+class ExchangeData(HailoData):
     def __init__(self):
         super().__init__()
 

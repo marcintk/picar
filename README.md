@@ -2,6 +2,8 @@
 
 Project experimenting with Raspberry Pi 5, AI Kit, Sense Kit and Robot.
 
+Build an ability to remotely control a robot based on AI detection input.
+
 ![robot](docs/images/robot.png)
 
 ## Hardware
@@ -16,18 +18,6 @@ Project experimenting with Raspberry Pi 5, AI Kit, Sense Kit and Robot.
 
 * Robot API: https://gpiozero.readthedocs.io/en/latest/recipes.html#robot
 * SenseHat API: https://pythonhosted.org/sense-hat/api/
-
-## Links
-
-* Car Detection and Tracking System for Toll Plazas - Raspberry Pi AI
-  Kit: https://docs.edgeimpulse.com/experts/image-projects/vehicle-detection-raspberry-pi-ai-kit
-* Object Detection with Tracking using ByteTracker and
-  Supervision: https://github.com/hailo-ai/Hailo-Application-Code-Examples/blob/main/runtime/python/detection_with_tracker/README.md
-* Hailo RPi5 Basic Pipelines: https://github.com/hailo-ai/hailo-rpi5-examples/blob/main/doc/basic-pipelines.md#hailo-rpi5-basic-pipelines
-* Hailo Zoo: https://github.com/hailo-ai/hailo_model_zoo
-* GStreamer Tutorials: https://gstreamer.freedesktop.org/documentation/tutorials/index.html?gi-language=c
-* Multiprocessing in Python: https://www.geeksforgeeks.org/multiprocessing-python-set-1/
-* Sense Hat Pins: https://pinout.xyz/pinout/sense_hat
 
 ## Installation
 
@@ -88,4 +78,17 @@ hailortcli fw-control identify       (status of hailo)
 
 ## To Do
 
-* explore tracking solutions
+* Tracking capabilities.
+* Radio control and visibility.
+
+## Links
+
+* Car Detection and Tracking System for Toll Plazas - Raspberry Pi AI
+  Kit: https://docs.edgeimpulse.com/experts/image-projects/vehicle-detection-raspberry-pi-ai-kit
+* Object Detection with Tracking using ByteTracker and
+  Supervision: https://github.com/hailo-ai/Hailo-Application-Code-Examples/blob/main/runtime/python/detection_with_tracker/README.md
+* Hailo RPi5 Basic Pipelines: https://github.com/hailo-ai/hailo-rpi5-examples/blob/main/doc/basic-pipelines.md#hailo-rpi5-basic-pipelines
+* Hailo Zoo: https://github.com/hailo-ai/hailo_model_zoo
+* GStreamer Tutorials: https://gstreamer.freedesktop.org/documentation/tutorials/index.html?gi-language=c
+* Multiprocessing in Python: https://www.geeksforgeeks.org/multiprocessing-python-set-1/
+* Sense Hat Pins: https://pinout.xyz/pinout/sense_hat
