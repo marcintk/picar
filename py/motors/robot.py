@@ -2,9 +2,8 @@ import logging
 from time import sleep
 
 from gpiozero import Motor, Robot
-from readchar import key
 
-from py.exchange_data import ExchangeData
+from py.exchange_data import ExchangeData, Keystroke
 from py.multiprocessor import MultiProcessor
 
 log = logging.getLogger(__name__)
@@ -21,13 +20,13 @@ class RobotController(MultiProcessor.Runner):
         try:
             while True:
                 match self.__data.key_pressed:
-                    case 'k' | key.UP:
+                    case Keystroke.FORWARD:
                         self.__move(self.__robot.forward, 'move forward')
-                    case 'j' | key.DOWN:
+                    case Keystroke.BACKWARD:
                         self.__move(self.__robot.backward, 'move backward')
-                    case 'h' | key.LEFT:
+                    case Keystroke.LEFT:
                         self.__move(self.__robot.left, 'turn left')
-                    case 'l' | key.RIGHT:
+                    case Keystroke.RIGHT:
                         self.__move(self.__robot.right, 'turn right')
         except Exception as e:
             log.warning(f"Interrupted: {e}!")

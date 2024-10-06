@@ -9,6 +9,7 @@ Project experimenting with Raspberry Pi 5, AI Kit, Sense Kit and Robot.
 * Raspberry Pi 5: https://www.raspberrypi.com/products/raspberry-pi-5/
 * Raspberry AI Kit: https://www.raspberrypi.com/documentation/accessories/ai-kit.html#about
 * Raspberry Sense Hat: https://www.raspberrypi.com/documentation/accessories/sense-hat.html
+* DC Converter 12v to 5v, 5A: https://www.amazon.com/gp/product/B0D146WV15/
 * Wheel Chassis Car Kit: https://www.amazon.com/gp/product/B09CPZ51N4/
 
 ## Software
@@ -87,5 +88,4 @@ hailortcli fw-control identify       (status of hailo)
 
 ## To Do
 
-* add motors and keyboard control
 * explore tracking solutions

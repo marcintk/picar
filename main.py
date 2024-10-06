@@ -16,7 +16,6 @@ log = logging.getLogger(__name__)
 def main():
     logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s | %(name)-10s] - %(message)s')
 
-    data = ExchangeData()
     processor = MultiProcessor()
 
     try:
@@ -26,9 +25,10 @@ def main():
         if params.verbose:
             logging.root.setLevel(logging.DEBUG)
 
+        data = ExchangeData()
         processor.add(lambda: SenseDisplay(data))
         processor.add(lambda: RobotController(data))
-        processor.add(lambda: AiDetector(params, data))
+        processor.add(lambda: AiDetector(params, data), enable=not params.skip_detection)
         processor.start()
 
         while True:
@@ -44,7 +44,7 @@ def main():
     except ValueError as e:
         log.error(f'ERROR: {e}')
     finally:
-        processor.stop()
+        processor.terminate()
 
 
 if __name__ == "__main__":
