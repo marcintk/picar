@@ -23,7 +23,7 @@ class AiDetector(HailoGStreamer, MultiProcessor.Runner):
                          video_input=params.video_input,
                          show_fps=params.show_fps,
                          data=data,
-                         on_probe_callback=AiDetector.on_no_detection_probe if params.plot_detection else AiDetector.on_probe,
+                         on_probe_callback=AiDetector.on_probe,
                          pipeline_string=PipelineString(network=params.network,
                                                         source_type=params.get_source_type(),
                                                         video_source=params.video_input,
@@ -65,8 +65,4 @@ class AiDetector(HailoGStreamer, MultiProcessor.Runner):
         data.new_persons_detected(9 if detection_count > 9 else detection_count)
 
         log.debug(f"Frame count: {data.get_count()}, Detection: persons:{detection_count}")
-        return Gst.PadProbeReturn.OK
-
-    @staticmethod
-    def on_no_detection_probe(pad, info, data: ExchangeData):
         return Gst.PadProbeReturn.OK
