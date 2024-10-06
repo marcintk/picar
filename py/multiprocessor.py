@@ -22,6 +22,8 @@ class MultiProcessor(object):
     def __init__(self) -> None:
         self.processes: [Process] = []
 
+        log.info(f'Multiprocessor with {os.cpu_count()} CPUs available.')
+
     def add(self, runner: Callable[[], Runner]) -> 'MultiProcessor':
         self.processes.append(multiprocessing.Process(target=MultiProcessor.__Wrapper(runner).target))
         return self

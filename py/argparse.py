@@ -6,7 +6,7 @@ from py.params import Parameters
 class ArgsParser(object):
     def __init__(self):
         self._parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=120))
-        self._parser.add_argument("-n", "--network", help="network type: [yolov6n/yolov8s/yolov8s_pose]", type=str, default='yolov8s]')
+        self._parser.add_argument("-n", "--network", help="network type: [yolov6n/yolov8s/yolov8s_pose]", type=str, default='yolov8s')
         self._parser.add_argument("-nv", "--no-view", help="do not display a view output", action=argparse.BooleanOptionalAction, default=False)
         self._parser.add_argument("-nd", "--no-detection", help="do not detect (same as detector=NONE)", action=argparse.BooleanOptionalAction, default=False)
         self._parser.add_argument("-np", "--no-plotting", help="do not plot detected objects", action=argparse.BooleanOptionalAction, default=False)
