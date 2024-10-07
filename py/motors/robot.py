@@ -3,15 +3,15 @@ from time import sleep
 
 from gpiozero import Motor, Robot
 
-from py.exchange_data import ExchangeData, Keystroke
+from py.data import RobotData, Keystroke
 from py.multiprocessor import MultiProcessor
 
 log = logging.getLogger(__name__)
 
 
 class RobotController(MultiProcessor.Runner):
-    def __init__(self, shared_data: ExchangeData):
-        self.__data: ExchangeData = shared_data
+    def __init__(self, shared_data: RobotData):
+        self.__data: RobotData = shared_data
         self.__robot = Robot(left=Motor(27, 22), right=Motor(6, 5))
 
     def run(self) -> None:

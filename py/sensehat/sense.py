@@ -3,7 +3,7 @@ import time
 
 from sense_hat import SenseHat
 
-from py.exchange_data import ExchangeData
+from py.data import RobotData
 from py.multiprocessor import MultiProcessor
 
 _RED = (255, 0, 0)
@@ -12,8 +12,8 @@ log = logging.getLogger(__name__)
 
 
 class SenseDisplay(MultiProcessor.Runner):
-    def __init__(self, exchange_data: ExchangeData):
-        self.__exchange_data: ExchangeData = exchange_data
+    def __init__(self, exchange_data: RobotData):
+        self.__exchange_data: RobotData = exchange_data
         self.__sense: SenseHat = SenseHat()
         self.__last_display: int = 0
 
