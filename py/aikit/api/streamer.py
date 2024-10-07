@@ -24,7 +24,7 @@ class HailoGStreamer:
         # Set up signal handler for SIGINT (Ctrl-C)
         signal.signal(signal.SIGINT, self.shutdown)
 
-    def on_probe(self, pad, info, data: HailoData):
+    def on_probe(self, pad: Gst.Pad, info: Gst.PadProbeInfo, data: HailoData) -> Gst.PadProbeReturn:
         return Gst.PadProbeReturn.OK
 
     def run(self) -> None:

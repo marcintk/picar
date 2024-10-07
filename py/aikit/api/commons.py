@@ -20,9 +20,9 @@ def get_caps_from_pad(pad: Gst.Pad):
         structure = caps.get_structure(0)
         if structure:
             # Extracting some common properties
-            format = structure.get_value('format')
-            width = structure.get_value('width')
-            height = structure.get_value('height')
+            format: str = structure.get_value('format')
+            width: int = structure.get_value('width')
+            height: int = structure.get_value('height')
             return format, width, height
     else:
         return None, None, None

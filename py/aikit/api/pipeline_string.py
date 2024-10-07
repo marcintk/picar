@@ -2,7 +2,7 @@ RESOURCES = './py/aikit/api/resources'
 HAILO_POST_SO = 'libyolo_hailortpp_post.so'
 
 
-def QUEUE(name, max_size_buffers: int = 3, max_size_bytes: int = 0, max_size_time: int = 0, leaky: str = 'no', chains: list[str] = ()) -> str:
+def QUEUE(name, max_size_buffers: int = 3, max_size_bytes: int = 0, max_size_time: int = 0, leaky: str = 'no', chains: list[str] = []) -> str:
     return (
         f"queue name=queue_{name} leaky={leaky} max-size-buffers={max_size_buffers} max-size-bytes={max_size_bytes} max-size-time={max_size_time} ! "
         f"{''.join(chains)}")
@@ -46,10 +46,6 @@ def TEE_SINK(from_queue: str, muxer: str, tee: str, sink_id: int, sinks: int, ch
     return "{}{}.sink_{} {}. ! {}".format(from_queue, muxer, sink_id, muxer if (sinks == sink_id + 1) else tee, ''.join(chains))
 
 
-def FPS_DISPLAY_SINK(video_sink: str, sync: str, show_fps: bool) -> str:
-    return f"fpsdisplaysink video-sink={video_sink} name=hailo_display sync={sync} text-overlay={show_fps} signal-fps-measurements=true"
-
-
 def IDENTITY() -> str:
     return "identity name=identity_callback ! "
 
@@ -72,12 +68,28 @@ def HAILO_OVERLAY() -> str:
     return "hailooverlay ! "
 
 
+def FPS_DISPLAY_SINK(video_sink: str, sync: str, show_fps: bool) -> str:
+    return f"fpsdisplaysink video-sink={video_sink} name=hailo_display sync={sync} text-overlay={show_fps} signal-fps-measurements=true"
+
+
+def TCP_SERVER_SINK() -> str:
+    return f"jpegenc ! rtpjpegpay ! tcpserversink host=0.0.0.0"
+
+
+def DISPLAY_SINK(fakesink: bool, tcp_sink: bool, show_fps: bool) -> list[str]:
+    if tcp_sink:
+        return [TCP_SERVER_SINK()]
+
+    return [FPS_DISPLAY_SINK(video_sink="fakesink" if fakesink else "xvimagesink", sync="false", show_fps=show_fps)]
+
+
 class PipelineString(object):
-    def __init__(self, network: str, source_type: str, video_source: str, show_display: bool, show_fps: bool) -> None:
+    def __init__(self, network: str, source_type: str, video_source: str, fake_display: bool, sink_to_tcp: bool, show_fps: bool) -> None:
         self.hef_path = self.__get_hef_path(network)
         self.source_type = source_type
         self.video_source = video_source
-        self.video_sink = "xvimagesink" if show_display else "fakesink"
+        self.fake_display = fake_display
+        self.sink_to_tcp = sink_to_tcp
         self.show_fps = show_fps
 
         self.batch_size = 2
@@ -87,7 +99,6 @@ class PipelineString(object):
         self.nms_score_threshold = 0.3
         self.nms_iou_threshold = 0.45
         self.labels_config = ''
-        self.sync = "false"
 
     def get_pipeline_string(self) -> str:
         muxer_variable = 'hmuc'
@@ -125,9 +136,7 @@ class PipelineString(object):
                                             QUEUE("user_callback", chains=[IDENTITY()]),
                                             QUEUE("hailooverlay", chains=[HAILO_OVERLAY()]),
                                             QUEUE("videoconvert", chains=[VIDEO_CONVERT(threads=3, qos='false')]),
-                                            QUEUE("hailo_display", chains=[FPS_DISPLAY_SINK(video_sink=self.video_sink,
-                                                                                            sync=self.sync,
-                                                                                            show_fps=self.show_fps)])])]))
+                                            QUEUE("hailo_display", chains=DISPLAY_SINK(self.fake_display, self.sink_to_tcp, self.show_fps))])]))
 
     def __source(self, name: str = 'src') -> str:
         match self.source_type:
