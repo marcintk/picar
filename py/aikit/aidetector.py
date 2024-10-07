@@ -2,7 +2,7 @@ import gi
 
 from py.aikit.api.data import HailoData
 from py.aikit.frame_rate import FrameRate
-from py.exchange_data import ExchangeData
+from py.data import RobotData
 
 gi.require_version('Gst', '1.0')  # define before importing Gst
 
@@ -32,7 +32,7 @@ class AiDetector(HailoGStreamer, MultiProcessor.Runner):
                                                         show_fps=params.show_fps).get_pipeline_string())
         self.fps = FrameRate()
 
-    def on_probe(self, pad, info, data: ExchangeData):
+    def on_probe(self, pad, info, data: RobotData):
 
         buffer = info.get_buffer()  # Get the GstBuffer from the probe info
 

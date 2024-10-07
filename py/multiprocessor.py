@@ -4,6 +4,10 @@ import os
 from collections.abc import Callable
 from multiprocessing import Process
 
+from readchar import readkey
+
+from py.data import RobotData
+
 log = logging.getLogger(__name__)
 
 
@@ -19,7 +23,8 @@ class MultiProcessor(object):
         def target(self):
             self.runner().run()
 
-    def __init__(self) -> None:
+    def __init__(self, data: RobotData) -> None:
+        self.data: RobotData = data
         self.processes: [Process] = []
 
         log.info(f'Multiprocessor with {os.cpu_count()} CPUs available.')
@@ -48,6 +53,14 @@ class MultiProcessor(object):
 
         # all processes finished
         log.info("All processes finished execution!")
+
+    def keyboard(self):
+        while True:
+            key: str = readkey()
+            self.data.new_key_pressed(key)
+
+            if key == 'q':
+                raise KeyboardInterrupt('User Exit')
 
     def terminate(self) -> None:
         for process in self.processes:

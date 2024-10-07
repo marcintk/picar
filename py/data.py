@@ -38,7 +38,7 @@ class Keystroke(Enum):
         return Keystroke.NONE
 
 
-class ExchangeData(HailoData):
+class RobotData(HailoData):
     def __init__(self):
         super().__init__()
 
