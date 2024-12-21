@@ -1,11 +1,9 @@
 import logging
 
-from readchar import readkey
-
 from py.aikit.aidetector import AiDetector
 from py.argparse import ArgsParser
-from py.exchange_data import ExchangeData
-from py.motors.robot import RobotController
+from py.data import RobotData
+from py.motors.motors import MotorsController
 from py.multiprocessor import MultiProcessor
 from py.params import Parameters
 from py.sensehat.sense import SenseDisplay
@@ -13,10 +11,11 @@ from py.sensehat.sense import SenseDisplay
 log = logging.getLogger(__name__)
 
 
-def main():
+def main() -> None:
     logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s | %(name)-10s] - %(message)s')
 
-    processor = MultiProcessor()
+    data = RobotData()
+    processor = MultiProcessor(data)
 
     try:
         params: Parameters = ArgsParser().parse()
@@ -25,18 +24,12 @@ def main():
         if params.verbose:
             logging.root.setLevel(logging.DEBUG)
 
-        data = ExchangeData()
         processor.add(lambda: SenseDisplay(data))
-        processor.add(lambda: RobotController(data))
+        processor.add(lambda: MotorsController(data))
         processor.add(lambda: AiDetector(params, data), enable=not params.skip_detection)
         processor.start()
+        processor.keyboard()
 
-        while True:
-            key: str = readkey()
-            data.new_key_pressed(key)
-
-            if key == 'q':
-                raise KeyboardInterrupt('User Exit')
     except KeyboardInterrupt as e:
         log.error(f'Keyboard Interrupt: {e}!')
     except KeyError as e:

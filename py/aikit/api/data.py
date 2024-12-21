@@ -2,18 +2,18 @@ import multiprocessing
 
 
 class HailoData:
-    def __init__(self):
+    def __init__(self) -> None:
         self.frame_queue = multiprocessing.Queue(maxsize=3)  # set up a multiprocessing queue to pass the frame to the main thread
         self.frame_count = 0
         self.running = True
 
-    def increment(self):
+    def increment(self) -> None:
         self.frame_count += 1
 
-    def get_count(self):
+    def get_count(self) -> int:
         return self.frame_count
 
-    def set_frame(self, frame):
+    def set_frame(self, frame) -> None:
         if not self.frame_queue.full():
             self.frame_queue.put(frame)
 

@@ -38,8 +38,8 @@ class Keystroke(Enum):
         return Keystroke.NONE
 
 
-class ExchangeData(HailoData):
-    def __init__(self):
+class RobotData(HailoData):
+    def __init__(self) -> None:
         super().__init__()
 
         self.__persons_detected = multiprocessing.Value('i', 0)
@@ -53,7 +53,7 @@ class ExchangeData(HailoData):
     def persons_detected(self) -> int:
         return self.__persons_detected.value
 
-    def new_persons_detected(self, count: int):
+    def new_persons_detected(self, count: int) -> None:
         self.__update_variable(self.__persons_detected, count)
 
     #
@@ -66,10 +66,10 @@ class ExchangeData(HailoData):
         self.reset_key_pressed()
         return Keystroke.from_int(value)
 
-    def reset_key_pressed(self):
+    def reset_key_pressed(self) -> None:
         self.new_key_pressed()
 
-    def new_key_pressed(self, keystroke: str = ''):
+    def new_key_pressed(self, keystroke: str = '') -> None:
         self.__update_variable(self.__key_pressed, Keystroke.from_str(keystroke).code())
 
     #
@@ -77,7 +77,7 @@ class ExchangeData(HailoData):
     #
 
     @staticmethod
-    def __update_variable(variable: multiprocessing.Value, value: int):
+    def __update_variable(variable: multiprocessing.Value, value: int) -> None:
         variable.acquire()
         variable.value = value
         variable.release()
